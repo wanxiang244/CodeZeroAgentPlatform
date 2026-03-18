@@ -38,4 +38,14 @@ public interface AppService extends IService<App> {
      * @return 查询包装器
      */
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
+
+    /**
+     * 删除应用（包含权限校验）
+     *
+     * @param id 应用 id
+     * @param userId 用户 id
+     * @param userRole 用户角色
+     * @return 是否删除成功
+     */
+    boolean deleteApp(Long id, Long userId, String userRole);
 }

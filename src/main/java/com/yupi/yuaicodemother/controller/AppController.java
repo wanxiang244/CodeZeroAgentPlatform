@@ -7,6 +7,7 @@ import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
 import com.yupi.yuaicodemother.model.dto.AppAddRequest;
+import com.yupi.yuaicodemother.model.dto.AppDeleteRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
@@ -69,5 +70,26 @@ public class AppController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
         return ResultUtils.success(app.getId());
+    }
+
+    /**
+     * 删除应用
+     *
+     * @param appDeleteRequest 应用删除请求
+     * @param request          HTTP 请求
+     * @return 是否删除成功
+     */
+    @PostMapping("/delete")
+    public BaseResponse<Boolean> deleteApp(@RequestBody AppDeleteRequest appDeleteRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeleteRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+
+        // 删除应用（包含权限校验：本人或管理员可删除）
+        boolean result = appService.deleteApp(appDeleteRequest.getId(), loginUser.getId(), loginUser.getUserRole());
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return ResultUtils.success(true);
     }
 }

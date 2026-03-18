@@ -11,6 +11,7 @@ import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.mapper.AppMapper;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
+import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
 import org.springframework.stereotype.Service;
@@ -64,5 +65,29 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 .like("appName", appName)
                 .eq("codeGenType", codeGenType)
                 .orderBy(sortField, "ascend".equals(sortOrder));
+    }
+
+    @Override
+    public boolean deleteApp(Long id, Long userId, String userRole) {
+        // 参数校验
+        if (id == null || userId == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        }
+
+        // 查询应用是否存在
+        App app = this.getById(id);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 权限校验：只能删除自己的应用或管理员可删除
+        boolean isAdmin = UserRoleEnum.ADMIN.getValue().equals(userRole);
+        boolean isOwner = app.getUserId().equals(userId);
+        if (!isOwner && !isAdmin) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该应用");
+        }
+
+        // 执行删除（逻辑删除）
+        return this.removeById(id);
     }
 }
