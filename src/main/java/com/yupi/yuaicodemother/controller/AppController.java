@@ -1,11 +1,13 @@
 package com.yupi.yuaicodemother.controller;
 
 import cn.hutool.core.util.StrUtil;
+import com.yupi.yuaicodemother.annotation.AuthCheck;
 import com.yupi.yuaicodemother.common.BaseResponse;
 import com.yupi.yuaicodemother.common.ResultUtils;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
+import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppAddRequest;
 import com.yupi.yuaicodemother.model.dto.AppDeleteRequest;
 import com.yupi.yuaicodemother.model.dto.AppUpdateRequest;
@@ -128,6 +130,52 @@ public class AppController {
 
         // 删除应用（包含权限校验：本人或管理员可删除）
         boolean result = appService.deleteApp(appDeleteRequest.getId(), loginUser.getId(), loginUser.getUserRole());
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 管理员删除应用
+     *
+     * @param appDeleteRequest 应用删除请求
+     * @param request          HTTP 请求
+     * @return 是否删除成功
+     */
+    @PostMapping("/admin/delete")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> adminDeleteApp(@RequestBody AppDeleteRequest appDeleteRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeleteRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 获取当前登录用户（已通过权限注解验证为管理员）
+        User loginUser = userService.getLoginUser(request);
+
+        // 管理员删除应用
+        boolean result = appService.adminDeleteApp(appDeleteRequest.getId());
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 管理员更新应用
+     *
+     * @param adminAppUpdateRequest 管理员应用更新请求
+     * @param request               HTTP 请求
+     * @return 更新结果
+     */
+    @PostMapping("/admin/update")
+    @AuthCheck(mustRole = "admin")
+    public BaseResponse<Boolean> adminUpdateApp(@RequestBody AdminAppUpdateRequest adminAppUpdateRequest, HttpServletRequest request) {
+        if (adminAppUpdateRequest == null || adminAppUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 获取当前登录用户（已通过权限注解验证为管理员）
+        User loginUser = userService.getLoginUser(request);
+
+        // 管理员更新应用
+        boolean result = appService.adminUpdateApp(adminAppUpdateRequest);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
         return ResultUtils.success(true);

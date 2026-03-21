@@ -48,4 +48,20 @@ public interface AppService extends IService<App> {
      * @return 是否删除成功
      */
     boolean deleteApp(Long id, Long userId, String userRole);
+
+    /**
+     * 管理员删除应用
+     *
+     * @param id 应用 id
+     * @return 是否删除成功
+     */
+    boolean adminDeleteApp(Long id);
+
+    /**
+     * 管理员更新应用
+     *
+     * @param adminAppUpdateRequest 管理员应用更新请求
+     * @return 是否更新成功
+     */
+    boolean adminUpdateApp(com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest adminAppUpdateRequest);
 }

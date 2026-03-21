@@ -5,8 +5,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.yupi.yuaicodemother.annotation.AuthCheck;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
+import com.yupi.yuaicodemother.exception.ThrowUtils;
+import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.mapper.AppMapper;
@@ -16,6 +19,7 @@ import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -89,5 +93,52 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         // 执行删除（逻辑删除）
         return this.removeById(id);
+    }
+
+    @Override
+    @AuthCheck(mustRole = "admin")
+    public boolean adminDeleteApp(Long id) {
+        // 参数校验
+        if (id == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用ID不能为空");
+        }
+
+        // 查询应用是否存在
+        App app = this.getById(id);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 执行删除（逻辑删除）
+        return this.removeById(id);
+    }
+
+    @Override
+    @AuthCheck(mustRole = "admin")
+    public boolean adminUpdateApp(AdminAppUpdateRequest adminAppUpdateRequest) {
+        // 参数校验
+        if (adminAppUpdateRequest == null || adminAppUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数错误");
+        }
+
+        // 查询应用是否存在
+        Long id = adminAppUpdateRequest.getId();
+        App oldApp = this.getById(id);
+        if (oldApp == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 构建更新实体
+        App app = new App();
+        app.setId(id);
+        app.setAppName(adminAppUpdateRequest.getAppName());
+        app.setCover(adminAppUpdateRequest.getCover());
+        app.setPriority(adminAppUpdateRequest.getPriority());
+        // 设置编辑时间
+        app.setEditTime(LocalDateTime.now());
+
+        boolean result = this.updateById(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return true;
     }
 }
