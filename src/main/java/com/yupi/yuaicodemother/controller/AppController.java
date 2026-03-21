@@ -9,6 +9,7 @@ import com.yupi.yuaicodemother.constant.UserConstant;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
+import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppAddRequest;
 import com.yupi.yuaicodemother.model.dto.AppDeleteRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
@@ -40,6 +41,8 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+    // ==================== 用户端接口 ====================
 
     /**
      * 创建应用
@@ -137,8 +140,6 @@ public class AppController {
 
         return ResultUtils.success(true);
     }
-
-    // ==================== 用户端接口 ====================
 
     /**
      * 查看应用详情（用户只能查看自己的应用）
@@ -269,5 +270,45 @@ public class AppController {
         App app = appService.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
         return ResultUtils.success(appService.getAppVO(app));
+    }
+
+    /**
+     * 管理员删除应用
+     *
+     * @param appDeleteRequest 应用删除请求
+     * @param request          HTTP 请求
+     * @return 是否删除成功
+     */
+    @PostMapping("/admin/delete")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> adminDeleteApp(@RequestBody AppDeleteRequest appDeleteRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(appDeleteRequest == null, ErrorCode.PARAMS_ERROR);
+
+        // 管理员删除应用
+        boolean result = appService.adminDeleteApp(appDeleteRequest.getId());
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return ResultUtils.success(true);
+    }
+
+    /**
+     * 管理员更新应用
+     *
+     * @param adminAppUpdateRequest 管理员应用更新请求
+     * @param request               HTTP 请求
+     * @return 更新结果
+     */
+    @PostMapping("/admin/update")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Boolean> adminUpdateApp(@RequestBody AdminAppUpdateRequest adminAppUpdateRequest, HttpServletRequest request) {
+        if (adminAppUpdateRequest == null || adminAppUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+
+        // 管理员更新应用
+        boolean result = appService.adminUpdateApp(adminAppUpdateRequest);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+
+        return ResultUtils.success(true);
     }
 }

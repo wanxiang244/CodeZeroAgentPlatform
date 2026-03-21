@@ -3,6 +3,7 @@ package com.yupi.yuaicodemother.service;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.vo.AppDetailVO;
@@ -86,4 +87,20 @@ public interface AppService extends IService<App> {
      * @return 分页结果
      */
     Page<AppDetailVO> listFeaturedAppByPage(long pageNum, long pageSize, Long userId);
+
+    /**
+     * 管理员删除应用
+     *
+     * @param id 应用 id
+     * @return 是否删除成功
+     */
+    boolean adminDeleteApp(Long id);
+
+    /**
+     * 管理员更新应用
+     *
+     * @param adminAppUpdateRequest 管理员应用更新请求
+     * @return 是否更新成功
+     */
+    boolean adminUpdateApp(AdminAppUpdateRequest adminAppUpdateRequest);
 }

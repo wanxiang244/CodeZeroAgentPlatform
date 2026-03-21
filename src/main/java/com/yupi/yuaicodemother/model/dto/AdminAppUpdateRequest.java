@@ -5,12 +5,12 @@ import lombok.Data;
 import java.io.Serializable;
 
 /**
- * 应用更新请求
+ * 管理员应用更新请求
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  */
 @Data
-public class AppUpdateRequest implements Serializable {
+public class AdminAppUpdateRequest implements Serializable {
 
     /**
      * id
