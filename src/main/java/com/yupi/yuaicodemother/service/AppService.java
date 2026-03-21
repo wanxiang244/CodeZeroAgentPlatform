@@ -1,9 +1,11 @@
 package com.yupi.yuaicodemother.service;
 
+import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
+import com.yupi.yuaicodemother.model.vo.AppDetailVO;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 
 import java.util.List;
@@ -48,4 +50,40 @@ public interface AppService extends IService<App> {
      * @return 是否删除成功
      */
     boolean deleteApp(Long id, Long userId, String userRole);
+
+    /**
+     * 获取应用详情视图对象（包含用户信息）
+     *
+     * @param app 应用信息
+     * @return 应用详情视图对象
+     */
+    AppDetailVO getAppDetailVO(App app);
+
+    /**
+     * 获取应用详情视图对象列表（包含用户信息）
+     *
+     * @param appList 应用列表
+     * @return 应用详情视图对象列表
+     */
+    List<AppDetailVO> getAppDetailVOList(List<App> appList);
+
+    /**
+     * 分页查询用户自己的应用
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param userId   用户 id
+     * @return 分页结果
+     */
+    Page<AppDetailVO> listMyAppByPage(long pageNum, long pageSize, Long userId);
+
+    /**
+     * 分页查询精选应用（包括自己的）
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param userId   当前用户 id（可为空）
+     * @return 分页结果
+     */
+    Page<AppDetailVO> listFeaturedAppByPage(long pageNum, long pageSize, Long userId);
 }

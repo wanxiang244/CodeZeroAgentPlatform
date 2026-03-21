@@ -1,6 +1,7 @@
 package com.yupi.yuaicodemother.controller;
 
 import cn.hutool.core.util.StrUtil;
+import com.mybatisflex.core.paginate.Page;
 import com.yupi.yuaicodemother.common.BaseResponse;
 import com.yupi.yuaicodemother.common.ResultUtils;
 import com.yupi.yuaicodemother.exception.BusinessException;
@@ -12,14 +13,12 @@ import com.yupi.yuaicodemother.model.dto.AppUpdateRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
+import com.yupi.yuaicodemother.model.vo.AppDetailVO;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 应用 控制层。
@@ -131,5 +130,83 @@ public class AppController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 查看应用详情
+     *
+     * @param id      应用 id
+     * @param request HTTP 请求
+     * @return 应用详情
+     */
+    @GetMapping("/get")
+    public BaseResponse<AppDetailVO> getAppById(@RequestParam Long id, HttpServletRequest request) {
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
+
+        // 查询应用是否存在
+        App app = appService.getById(id);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+
+        // 权限校验：只能查看自己的应用
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限查看该应用");
+        }
+
+        // 返回应用详情
+        return ResultUtils.success(appService.getAppDetailVO(app));
+    }
+
+    /**
+     * 分页查询用户自己的应用
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param request  HTTP 请求
+     * @return 应用分页列表
+     */
+    @GetMapping("/my/list/page")
+    public BaseResponse<Page<AppDetailVO>> listMyAppByPage(
+            @RequestParam(defaultValue = "1") long pageNum,
+            @RequestParam(defaultValue = "10") long pageSize,
+            HttpServletRequest request) {
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+
+        // 分页查询
+        Page<AppDetailVO> resultPage = appService.listMyAppByPage(pageNum, pageSize, loginUser.getId());
+        return ResultUtils.success(resultPage);
+    }
+
+    /**
+     * 分页查询精选应用（包括自己的）
+     *
+     * @param pageNum  页码
+     * @param pageSize 每页大小
+     * @param request  HTTP 请求
+     * @return 精选应用分页列表
+     */
+    @GetMapping("/featured/list/page")
+    public BaseResponse<Page<AppDetailVO>> listFeaturedAppByPage(
+            @RequestParam(defaultValue = "1") long pageNum,
+            @RequestParam(defaultValue = "10") long pageSize,
+            HttpServletRequest request) {
+        // 获取当前登录用户（可为空，允许未登录用户查看精选应用）
+        User loginUser = null;
+        try {
+            loginUser = userService.getLoginUser(request);
+        } catch (Exception e) {
+            // 未登录用户，loginUser 保持为 null
+        }
+
+        Long userId = loginUser != null ? loginUser.getId() : null;
+
+        // 分页查询
+        Page<AppDetailVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
+        return ResultUtils.success(resultPage);
     }
 }
