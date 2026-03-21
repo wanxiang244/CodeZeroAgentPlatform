@@ -2,23 +2,29 @@ package com.yupi.yuaicodemother.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
+import com.yupi.yuaicodemother.annotation.AuthCheck;
 import com.yupi.yuaicodemother.common.BaseResponse;
 import com.yupi.yuaicodemother.common.ResultUtils;
+import com.yupi.yuaicodemother.constant.UserConstant;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
 import com.yupi.yuaicodemother.model.dto.AppAddRequest;
 import com.yupi.yuaicodemother.model.dto.AppDeleteRequest;
+import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.dto.AppUpdateRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.vo.AppDetailVO;
+import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 应用 控制层。
@@ -132,8 +138,10 @@ public class AppController {
         return ResultUtils.success(true);
     }
 
+    // ==================== 用户端接口 ====================
+
     /**
-     * 查看应用详情
+     * 查看应用详情（用户只能查看自己的应用）
      *
      * @param id      应用 id
      * @param request HTTP 请求
@@ -208,5 +216,58 @@ public class AppController {
         // 分页查询
         Page<AppDetailVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
         return ResultUtils.success(resultPage);
+    }
+
+    // ==================== 管理员接口 ====================
+
+    /**
+     * 分页获取应用列表（仅管理员）
+     *
+     * @param appQueryRequest 查询请求参数
+     * @return 分页结果
+     */
+    @PostMapping("/list/page/vo")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Page<AppVO>> listAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
+        ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        long pageNum = appQueryRequest.getPageNum();
+        long pageSize = appQueryRequest.getPageSize();
+        Page<App> appPage = appService.page(Page.of(pageNum, pageSize),
+                appService.getQueryWrapper(appQueryRequest));
+        // 数据脱敏
+        Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
+        List<AppVO> appVOList = appService.getAppVOList(appPage.getRecords());
+        appVOPage.setRecords(appVOList);
+        return ResultUtils.success(appVOPage);
+    }
+
+    /**
+     * 根据 id 获取应用详情（仅管理员）
+     *
+     * @param id 应用 id
+     * @return 应用详情
+     */
+    @GetMapping("/get/admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<App> getAppByIdAdmin(@RequestParam long id) {
+        ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        App app = appService.getById(id);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        return ResultUtils.success(app);
+    }
+
+    /**
+     * 根据 id 获取应用详情（脱敏，仅管理员）
+     *
+     * @param id 应用 id
+     * @return 应用详情（脱敏）
+     */
+    @GetMapping("/get/vo/admin")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<AppVO> getAppVOByIdAdmin(@RequestParam long id) {
+        ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
+        App app = appService.getById(id);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        return ResultUtils.success(appService.getAppVO(app));
     }
 }

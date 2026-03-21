@@ -1,6 +1,8 @@
 package com.yupi.yuaicodemother.model.dto;
 
+import com.yupi.yuaicodemother.common.PageRequest;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
 
@@ -9,8 +11,9 @@ import java.io.Serializable;
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class AppQueryRequest implements Serializable {
+public class AppQueryRequest extends PageRequest implements Serializable {
 
     /**
      * id
@@ -31,26 +34,6 @@ public class AppQueryRequest implements Serializable {
      * 创建用户 id
      */
     private Long userId;
-
-    /**
-     * 排序字段
-     */
-    private String sortField;
-
-    /**
-     * 排序顺序（ascend, descend）
-     */
-    private String sortOrder;
-
-    /**
-     * 当前页号
-     */
-    private long pageNum = 1;
-
-    /**
-     * 页面大小
-     */
-    private long pageSize = 10;
 
     private static final long serialVersionUID = 1L;
 }
