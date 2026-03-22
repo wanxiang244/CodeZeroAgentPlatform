@@ -17,7 +17,6 @@ import com.yupi.yuaicodemother.model.dto.AppUpdateRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
-import com.yupi.yuaicodemother.model.vo.AppDetailVO;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.UserService;
@@ -149,7 +148,7 @@ public class AppController {
      * @return 应用详情
      */
     @GetMapping("/get")
-    public BaseResponse<AppDetailVO> getAppById(@RequestParam Long id, HttpServletRequest request) {
+    public BaseResponse<AppVO> getAppById(@RequestParam Long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
 
         // 查询应用是否存在
@@ -167,7 +166,7 @@ public class AppController {
         }
 
         // 返回应用详情
-        return ResultUtils.success(appService.getAppDetailVO(app));
+        return ResultUtils.success(appService.getAppVO(app));
     }
 
     /**
@@ -179,7 +178,7 @@ public class AppController {
      * @return 应用分页列表
      */
     @GetMapping("/my/list/page")
-    public BaseResponse<Page<AppDetailVO>> listMyAppByPage(
+    public BaseResponse<Page<AppVO>> listMyAppByPage(
             @RequestParam(defaultValue = "1") long pageNum,
             @RequestParam(defaultValue = "10") long pageSize,
             HttpServletRequest request) {
@@ -187,7 +186,7 @@ public class AppController {
         User loginUser = userService.getLoginUser(request);
 
         // 分页查询
-        Page<AppDetailVO> resultPage = appService.listMyAppByPage(pageNum, pageSize, loginUser.getId());
+        Page<AppVO> resultPage = appService.listMyAppByPage(pageNum, pageSize, loginUser.getId());
         return ResultUtils.success(resultPage);
     }
 
@@ -200,7 +199,7 @@ public class AppController {
      * @return 精选应用分页列表
      */
     @GetMapping("/featured/list/page")
-    public BaseResponse<Page<AppDetailVO>> listFeaturedAppByPage(
+    public BaseResponse<Page<AppVO>> listFeaturedAppByPage(
             @RequestParam(defaultValue = "1") long pageNum,
             @RequestParam(defaultValue = "10") long pageSize,
             HttpServletRequest request) {
@@ -215,7 +214,7 @@ public class AppController {
         Long userId = loginUser != null ? loginUser.getId() : null;
 
         // 分页查询
-        Page<AppDetailVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
+        Page<AppVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
         return ResultUtils.success(resultPage);
     }
 
@@ -248,24 +247,9 @@ public class AppController {
      * @param id 应用 id
      * @return 应用详情
      */
-    @GetMapping("/get/admin")
+    @GetMapping("/get/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<App> getAppByIdAdmin(@RequestParam long id) {
-        ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
-        App app = appService.getById(id);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
-        return ResultUtils.success(app);
-    }
-
-    /**
-     * 根据 id 获取应用详情（脱敏，仅管理员）
-     *
-     * @param id 应用 id
-     * @return 应用详情（脱敏）
-     */
-    @GetMapping("/get/vo/admin")
-    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<AppVO> getAppVOByIdAdmin(@RequestParam long id) {
+    public BaseResponse<AppVO> getAppVOById(@RequestParam long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         App app = appService.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);

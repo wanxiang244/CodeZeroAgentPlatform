@@ -9,26 +9,18 @@ import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
-import com.yupi.yuaicodemother.mapper.UserMapper;
 import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.mapper.AppMapper;
-import com.yupi.yuaicodemother.model.entity.User;
-import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
-import com.yupi.yuaicodemother.model.vo.AppDetailVO;
 import com.yupi.yuaicodemother.model.vo.AppVO;
-import com.yupi.yuaicodemother.model.vo.UserVO;
 import com.yupi.yuaicodemother.service.AppService;
-import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -38,9 +30,6 @@ import java.util.stream.Collectors;
  */
 @Service
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
-
-    @Resource
-    private UserMapper userMapper;
 
     @Override
     public AppVO getAppVO(App app) {
@@ -106,65 +95,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     }
 
     @Override
-    public AppDetailVO getAppDetailVO(App app) {
-        if (app == null) {
-            return null;
-        }
-        AppDetailVO appDetailVO = new AppDetailVO();
-        BeanUtil.copyProperties(app, appDetailVO);
-
-        // 查询并设置用户信息
-        Long userId = app.getUserId();
-        if (userId != null) {
-            User user = userMapper.selectOneById(userId);
-            if (user != null) {
-                UserVO userVO = new UserVO();
-                BeanUtil.copyProperties(user, userVO);
-                appDetailVO.setUser(userVO);
-            }
-        }
-        return appDetailVO;
-    }
-
-    @Override
-    public List<AppDetailVO> getAppDetailVOList(List<App> appList) {
-        if (CollUtil.isEmpty(appList)) {
-            return new ArrayList<>();
-        }
-
-        // 获取所有用户 id
-        Set<Long> userIdSet = appList.stream()
-                .map(App::getUserId)
-                .filter(id -> id != null)
-                .collect(Collectors.toSet());
-
-        // 批量查询用户信息
-        Map<Long, User> userMap = new java.util.HashMap<>();
-        if (CollUtil.isNotEmpty(userIdSet)) {
-            List<User> userList = userMapper.selectListByIds(userIdSet);
-            userMap = userList.stream()
-                    .collect(Collectors.toMap(User::getId, user -> user));
-        }
-
-        // 转换为 AppDetailVO
-        Map<Long, User> finalUserMap = userMap;
-        return appList.stream().map(app -> {
-            AppDetailVO appDetailVO = new AppDetailVO();
-            BeanUtil.copyProperties(app, appDetailVO);
-
-            // 设置用户信息
-            Long userId = app.getUserId();
-            if (userId != null && finalUserMap.containsKey(userId)) {
-                UserVO userVO = new UserVO();
-                BeanUtil.copyProperties(finalUserMap.get(userId), userVO);
-                appDetailVO.setUser(userVO);
-            }
-            return appDetailVO;
-        }).collect(Collectors.toList());
-    }
-
-    @Override
-    public Page<AppDetailVO> listMyAppByPage(long pageNum, long pageSize, Long userId) {
+    public Page<AppVO> listMyAppByPage(long pageNum, long pageSize, Long userId) {
         // 限制每页最多 20 条
         pageSize = Math.min(pageSize, 20);
 
@@ -176,15 +107,15 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 分页查询
         Page<App> appPage = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
-        // 转换为 AppDetailVO
-        Page<AppDetailVO> resultPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
-        resultPage.setRecords(this.getAppDetailVOList(appPage.getRecords()));
+        // 转换为 AppVO
+        Page<AppVO> resultPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
+        resultPage.setRecords(this.getAppVOList(appPage.getRecords()));
 
         return resultPage;
     }
 
     @Override
-    public Page<AppDetailVO> listFeaturedAppByPage(long pageNum, long pageSize, Long userId) {
+    public Page<AppVO> listFeaturedAppByPage(long pageNum, long pageSize, Long userId) {
         // 限制每页最多 20 条
         pageSize = Math.min(pageSize, 20);
 
@@ -207,9 +138,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 分页查询
         Page<App> appPage = this.page(Page.of(pageNum, pageSize), queryWrapper);
 
-        // 转换为 AppDetailVO
-        Page<AppDetailVO> resultPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
-        resultPage.setRecords(this.getAppDetailVOList(appPage.getRecords()));
+        // 转换为 AppVO
+        Page<AppVO> resultPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
+        resultPage.setRecords(this.getAppVOList(appPage.getRecords()));
 
         return resultPage;
     }
