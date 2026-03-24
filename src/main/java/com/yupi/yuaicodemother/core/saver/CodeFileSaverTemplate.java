@@ -9,7 +9,6 @@ import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.locks.Condition;
 
 /**
  * 抽象代码文件保存器 - 模板方法模式
@@ -30,10 +29,21 @@ public abstract class CodeFileSaverTemplate<T> {
      * @return 保存的目录
      */
     public final File saveCode(T result) {
+        return saveCode(result, null);
+    }
+
+    /**
+     * 模板方法：保存代码的标准流程（支持 appId）
+     *
+     * @param result 代码结果对象
+     * @param appId   应用 id（可选，用于关联应用）
+     * @return 保存的目录
+     */
+    public final File saveCode(T result, Long appId) {
         // 1. 验证输入
         validateInput(result);
         // 2. 构建唯一目录
-        String baseDirPath = buildUniqueDir();
+        String baseDirPath = buildUniqueDir(appId);
         // 3. 保存文件（具体实现交给子类）
         saveFiles(result, baseDirPath);
         // 4. 返回文件目录对象
@@ -66,13 +76,21 @@ public abstract class CodeFileSaverTemplate<T> {
     }
 
     /**
-     * 构建文件的唯一路径：tmp/code_output/bizType_雪花 ID
+     * 构建文件的唯一路径：tmp/code_output/codeGenType_appId 或 tmp/code_output/codeGenType_雪花ID
      *
+     * @param appId 应用 id（可选）
      * @return 目录路径
      */
-    protected String buildUniqueDir() {
+    protected String buildUniqueDir(Long appId) {
         String codeType = getCodeType().getValue();
-        String uniqueDirName = StrUtil.format("{}_{}", codeType, IdUtil.getSnowflakeNextIdStr());
+        String uniqueDirName;
+        if (appId != null) {
+            // 使用 appId 作为目录名，便于关联应用
+            uniqueDirName = StrUtil.format("{}_{}", codeType, appId);
+        } else {
+            // 兼容旧逻辑：使用雪花 ID
+            uniqueDirName = StrUtil.format("{}_{}", codeType, IdUtil.getSnowflakeNextIdStr());
+        }
         String dirPath = FILE_SAVE_ROOT_DIR + File.separator + uniqueDirName;
         FileUtil.mkdir(dirPath);
         return dirPath;
