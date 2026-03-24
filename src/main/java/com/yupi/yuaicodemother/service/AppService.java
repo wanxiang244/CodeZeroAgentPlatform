@@ -97,4 +97,20 @@ public interface AppService extends IService<App> {
      * @return 流式代码生成响应
      */
     Flux<String> chatToGenCode(Long appId, Long userId);
+
+    /**
+     * 检查deployKey是否存在
+     *
+     * @param deployKey 部署标识
+     * @return 是否存在
+     */
+    boolean existsByDeployKey(String deployKey);
+
+    /**
+     * 检查deployKey是否存在
+     *
+     * @param deployKey 部署标识
+     * @return 是否存在
+     */
+    boolean existsByDeployKey(String deployKey);
 }

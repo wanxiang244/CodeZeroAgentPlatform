@@ -19,6 +19,7 @@ import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
+import com.yupi.yuaicodemother.service.DeployService;
 import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -45,6 +46,9 @@ public class AppController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private DeployService deployService;
 
     // ==================== 用户端接口 ====================
 
@@ -221,6 +225,24 @@ public class AppController {
         // 分页查询
         Page<AppVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
         return ResultUtils.success(resultPage);
+    }
+
+    /**
+     * 部署应用
+     *
+     * @param appId   应用 id
+     * @param request HTTP 请求
+     * @return 部署URL
+     */
+    @PostMapping("/deploy")
+    public BaseResponse<String> deployApp(@RequestParam Long appId, HttpServletRequest request) {
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+
+        // 调用部署服务
+        String deployUrl = deployService.deployApp(appId, loginUser.getId());
+
+        return ResultUtils.success(deployUrl);
     }
 
     // ==================== 管理员接口 ====================

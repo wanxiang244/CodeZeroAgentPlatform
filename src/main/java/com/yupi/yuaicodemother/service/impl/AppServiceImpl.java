@@ -234,4 +234,24 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 调用 AI 代码生成门面，流式生成代码
         return aiCodeGeneratorFacade.generateAndSaveCodeStream(initPrompt, codeGenType, appId);
     }
+
+    @Override
+    public boolean existsByDeployKey(String deployKey) {
+        if (StrUtil.isBlank(deployKey)) {
+            return false;
+        }
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq("deployKey", deployKey);
+        return this.exists(queryWrapper);
+    }
+
+    @Override
+    public boolean existsByDeployKey(String deployKey) {
+        if (StrUtil.isBlank(deployKey)) {
+            return false;
+        }
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq("deployKey", deployKey);
+        return this.exists(queryWrapper);
+    }
 }
