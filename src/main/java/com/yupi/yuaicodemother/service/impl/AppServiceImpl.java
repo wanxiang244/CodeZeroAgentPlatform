@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
+import com.yupi.yuaicodemother.core.AiCodeGeneratorFacade;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.exception.ThrowUtils;
@@ -13,10 +14,13 @@ import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.mapper.AppMapper;
+import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.service.AppService;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,6 +34,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
+
+    @Resource
+    private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
     @Override
     public AppVO getAppVO(App app) {
@@ -188,5 +195,43 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         boolean result = this.updateById(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
         return true;
+    }
+
+    @Override
+    public Flux<String> chatToGenCode(Long appId, Long userId) {
+        // 参数校验
+        if (appId == null || appId <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用ID无效");
+        }
+        if (userId == null || userId <= 0) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "用户未登录");
+        }
+
+        // 查询应用是否存在
+        App app = this.getById(appId);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 权限校验：只能操作自己的应用
+        if (!app.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限操作该应用");
+        }
+
+        // 获取初始提示词
+        String initPrompt = app.getInitPrompt();
+        if (StrUtil.isBlank(initPrompt)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用初始化提示词为空");
+        }
+
+        // 获取代码生成类型
+        String codeGenTypeValue = app.getCodeGenType();
+        CodeGenTypeEnum codeGenType = CodeGenTypeEnum.getEnumByValue(codeGenTypeValue);
+        if (codeGenType == null) {
+            codeGenType = CodeGenTypeEnum.MULTI_FILE; // 默认多文件生成
+        }
+
+        // 调用 AI 代码生成门面，流式生成代码
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(initPrompt, codeGenType, appId);
     }
 }

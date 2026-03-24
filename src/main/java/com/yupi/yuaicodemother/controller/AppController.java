@@ -26,6 +26,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.*;
+
+import reactor.core.publisher.Flux;
+
 /**
  * 应用 控制层。
  *
@@ -294,5 +299,33 @@ public class AppController {
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
 
         return ResultUtils.success(true);
+    }
+
+    /**
+     * 对话生成代码（流式）
+     * 根据应用 id 获取应用信息，使用初始提示词生成代码
+     *
+     * @param appId   应用 id
+     * @param request HTTP 请求
+     * @return 流式代码生成响应
+     */
+    @GetMapping(value = "/chat-to-gen-code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<String> chatToGenCode(@RequestParam Long appId, HttpServletRequest request) {
+        // 权限校验：确保用户已登录
+        User loginUser = userService.getLoginUser(request);
+
+        // 查询应用是否存在
+        App app = appService.getById(appId);
+        if (app == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        }
+
+        // 权限校验：只能操作自己的应用
+        if (!app.getUserId().equals(loginUser.getId())) {
+            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限操作该应用");
+        }
+
+        // 调用服务层流式生成代码
+        return appService.chatToGenCode(appId, loginUser.getId());
     }
 }

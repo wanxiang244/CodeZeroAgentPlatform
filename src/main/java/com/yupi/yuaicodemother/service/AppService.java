@@ -7,6 +7,7 @@ import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.vo.AppVO;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -86,4 +87,14 @@ public interface AppService extends IService<App> {
      * @return 是否更新成功
      */
     boolean adminUpdateApp(AdminAppUpdateRequest adminAppUpdateRequest);
+
+    /**
+     * 对话生成代码（流式）
+     * 根据应用 id 获取应用信息，使用初始提示词生成代码
+     *
+     * @param appId 应用 id
+     * @param userId 用户 id
+     * @return 流式代码生成响应
+     */
+    Flux<String> chatToGenCode(Long appId, Long userId);
 }
