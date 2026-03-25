@@ -11,6 +11,7 @@ import com.yupi.yuaicodemother.service.DeployService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
@@ -79,8 +80,22 @@ public class DeployServiceImpl implements DeployService {
         String targetDirPath = System.getProperty("user.dir") + "/tmp/code_deploy/" + deployKey;
 
         try {
-            // 复制整个目录
-            FileUtil.copy(sourceDirPath, targetDirPath, true);
+            // 创建目标目录
+            FileUtil.mkdir(targetDirPath);
+
+            // 获取源目录下的所有文件
+            File[] sourceFiles = FileUtil.file(sourceDirPath).listFiles();
+            if (sourceFiles == null || sourceFiles.length == 0) {
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件为空，请先生成代码");
+            }
+
+            // 将源目录下的所有文件复制到目标目录
+            for (File sourceFile : sourceFiles) {
+                if (sourceFile.isFile()) {
+                    String targetFilePath = targetDirPath + "/" + sourceFile.getName();
+                    FileUtil.copy(sourceFile, FileUtil.file(targetFilePath), true);
+                }
+            }
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：" + e.getMessage());
         }
