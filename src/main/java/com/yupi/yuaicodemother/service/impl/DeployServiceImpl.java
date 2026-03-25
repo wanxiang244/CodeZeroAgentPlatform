@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -83,18 +84,17 @@ public class DeployServiceImpl implements DeployService {
             // 创建目标目录
             FileUtil.mkdir(targetDirPath);
 
-            // 获取源目录下的所有文件
-            File[] sourceFiles = FileUtil.file(sourceDirPath).listFiles();
-            if (sourceFiles == null || sourceFiles.length == 0) {
+            // 获取源目录下的所有文件名
+            List<String> fileNames = FileUtil.listFileNames(sourceDirPath);
+            if (fileNames == null || fileNames.isEmpty()) {
                 throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件为空，请先生成代码");
             }
 
             // 将源目录下的所有文件复制到目标目录
-            for (File sourceFile : sourceFiles) {
-                if (sourceFile.isFile()) {
-                    String targetFilePath = targetDirPath + "/" + sourceFile.getName();
-                    FileUtil.copy(sourceFile, FileUtil.file(targetFilePath), true);
-                }
+            for (String fileName : fileNames) {
+                String sourceFilePath = sourceDirPath + "/" + fileName;
+                String targetFilePath = targetDirPath + "/" + fileName;
+                FileUtil.copy(sourceFilePath, targetFilePath, true);
             }
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：" + e.getMessage());
