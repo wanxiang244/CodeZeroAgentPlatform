@@ -55,10 +55,13 @@ public class DeployServiceImpl implements DeployService {
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限部署该应用");
         }
 
-        // 检查是否已经部署过
-        if (StrUtil.isNotBlank(app.getDeployKey())) {
-            // 已经部署过，直接返回已有的URL
-            return DEPLOY_DOMAIN + "/" + app.getDeployKey();
+        // 获取或生成deployKey
+        String deployKey = app.getDeployKey();
+        boolean isNewDeployKey = false;
+        if (StrUtil.isBlank(deployKey)) {
+            // 生成唯一的deployKey
+            deployKey = generateUniqueDeployKey();
+            isNewDeployKey = true;
         }
 
         // 获取代码生成类型
@@ -74,14 +77,11 @@ public class DeployServiceImpl implements DeployService {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件不存在，请先生成代码");
         }
 
-        // 生成唯一的deployKey
-        String deployKey = generateUniqueDeployKey();
-
         // 目标目录路径
         String targetDirPath = System.getProperty("user.dir") + "/tmp/code_deploy/" + deployKey;
 
         try {
-            // 创建目标目录
+            // 创建目标目录（如果不存在）
             FileUtil.mkdir(targetDirPath);
 
             // 获取源目录下的所有文件名
@@ -90,7 +90,7 @@ public class DeployServiceImpl implements DeployService {
                 throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件为空，请先生成代码");
             }
 
-            // 将源目录下的所有文件复制到目标目录
+            // 将源目录下的所有文件复制到目标目录（覆盖现有文件）
             for (String fileName : fileNames) {
                 String sourceFilePath = sourceDirPath + "/" + fileName;
                 String targetFilePath = targetDirPath + "/" + fileName;
@@ -100,16 +100,24 @@ public class DeployServiceImpl implements DeployService {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：" + e.getMessage());
         }
 
-        // 更新应用的deployKey和部署时间
-        App updateApp = new App();
-        updateApp.setId(appId);
-        updateApp.setDeployKey(deployKey);
-        updateApp.setDeployedTime(LocalDateTime.now());
-        boolean result = appService.updateById(updateApp);
-        if (!result) {
-            // 如果更新失败，清理已复制的文件
-            FileUtil.del(targetDirPath);
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：更新应用信息失败");
+        // 如果是新生成的deployKey，或者需要更新部署时间，更新应用信息
+        if (isNewDeployKey) {
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setDeployKey(deployKey);
+            updateApp.setDeployedTime(LocalDateTime.now());
+            boolean result = appService.updateById(updateApp);
+            if (!result) {
+                // 如果更新失败，清理已复制的文件
+                FileUtil.del(targetDirPath);
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：更新应用信息失败");
+            }
+        } else {
+            // 已有deployKey，只更新部署时间
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setDeployedTime(LocalDateTime.now());
+            appService.updateById(updateApp);
         }
 
         // 返回部署URL
