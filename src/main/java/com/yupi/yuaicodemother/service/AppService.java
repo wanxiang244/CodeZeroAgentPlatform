@@ -106,11 +106,5 @@ public interface AppService extends IService<App> {
      */
     boolean existsByDeployKey(String deployKey);
 
-    /**
-     * 检查deployKey是否存在
-     *
-     * @param deployKey 部署标识
-     * @return 是否存在
-     */
-    boolean existsByDeployKey(String deployKey);
+
 }

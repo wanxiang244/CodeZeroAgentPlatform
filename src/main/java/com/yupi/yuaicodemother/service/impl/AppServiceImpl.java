@@ -245,13 +245,5 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         return this.exists(queryWrapper);
     }
 
-    @Override
-    public boolean existsByDeployKey(String deployKey) {
-        if (StrUtil.isBlank(deployKey)) {
-            return false;
-        }
-        QueryWrapper queryWrapper = QueryWrapper.create()
-                .eq("deployKey", deployKey);
-        return this.exists(queryWrapper);
-    }
+
 }
