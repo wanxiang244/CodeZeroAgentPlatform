@@ -131,7 +131,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (userId != null) {
             // 有登录用户：精选应用 + 自己的应用
             queryWrapper = QueryWrapper.create()
-                    .where("priority > 0 OR userId = ?", 0, userId)
+                    .where("priority > ? OR userId = ?", 0, userId)
                     .orderBy("priority", false)
                     .orderBy("createTime", false);
         } else {
