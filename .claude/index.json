@@ -1,98 +1,111 @@
 {
-  "timestamp": "2026-03-12T21:20:45+08:00",
+  "timestamp": "2026-03-26T00:00:00+08:00",
   "projectRoot": "D:\\code\\yu-ai-code-mother-myself",
   "projectName": "yu-ai-code-mother",
-  "description": "基于 LangChain4j 的 AI 代码生成平台",
+  "description": "基于 LangChain4j 的 AI 代码生成平台，支持 HTML/多文件代码生成与应用部署",
   "modules": [
     {
       "name": "backend",
       "path": ".",
-      "language": "Java",
+      "language": "Java 21",
       "framework": "Spring Boot 3.5.4",
       "entry": "src/main/java/com/yupi/yuaicodemother/YuAiCodeMotherApplication.java",
       "documentPath": "./CLAUDE.md",
       "structure": {
         "controllers": [
           "src/main/java/com/yupi/yuaicodemother/controller/UserController.java",
+          "src/main/java/com/yupi/yuaicodemother/controller/AppController.java",
           "src/main/java/com/yupi/yuaicodemother/controller/HealthController.java"
         ],
         "services": [
           "src/main/java/com/yupi/yuaicodemother/service/UserService.java",
-          "src/main/java/com/yupi/yuaicodemother/service/impl/UserServiceImpl.java"
+          "src/main/java/com/yupi/yuaicodemother/service/AppService.java",
+          "src/main/java/com/yupi/yuaicodemother/service/DeployService.java",
+          "src/main/java/com/yupi/yuaicodemother/service/impl/UserServiceImpl.java",
+          "src/main/java/com/yupi/yuaicodemother/service/impl/AppServiceImpl.java",
+          "src/main/java/com/yupi/yuaicodemother/service/impl/DeployServiceImpl.java"
         ],
         "models": [
           "src/main/java/com/yupi/yuaicodemother/model/entity/User.java",
-          "src/main/java/com/yupi/yuaicodemother/model/dto/UserAddRequest.java",
-          "src/main/java/com/yupi/yuaicodemother/model/dto/UserLoginRequest.java",
-          "src/main/java/com/yupi/yuaicodemother/model/dto/UserQueryRequest.java",
-          "src/main/java/com/yupi/yuaicodemother/model/dto/UserRegisterRequest.java",
-          "src/main/java/com/yupi/yuaicodemother/model/dto/UserUpdateRequest.java",
-          "src/main/java/com/yupi/yuaicodemother/model/vo/LoginUserVO.java",
-          "src/main/java/com/yupi/yuaicodemother/model/vo/UserVO.java",
+          "src/main/java/com/yupi/yuaicodemother/model/entity/App.java",
           "src/main/java/com/yupi/yuaicodemother/model/enums/CodeGenTypeEnum.java",
           "src/main/java/com/yupi/yuaicodemother/model/enums/UserRoleEnum.java",
+          "src/main/java/com/yupi/yuaicodemother/model/vo/AppVO.java",
+          "src/main/java/com/yupi/yuaicodemother/model/vo/LoginUserVO.java",
+          "src/main/java/com/yupi/yuaicodemother/model/vo/UserVO.java",
           "src/main/java/com/yupi/yuaicodemother/ai/model/HtmlCodeResult.java",
           "src/main/java/com/yupi/yuaicodemother/ai/model/MultiFileCodeResult.java"
         ],
         "mappers": [
           "src/main/java/com/yupi/yuaicodemother/mapper/UserMapper.java",
+          "src/main/java/com/yupi/yuaicodemother/mapper/AppMapper.java",
           "src/main/resources/mapper/UserMapper.xml",
-          "src/main/resources/generator/mapper/AppMapper.xml"
+          "src/main/resources/mapper/AppMapper.xml"
         ],
         "coreModules": {
-          "ai": [
-            "src/main/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorService.java",
-            "src/main/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorServiceFactory.java"
-          ],
-          "parser": [
-            "src/main/java/com/yupi/yuaicodemother/core/parser/CodeParser.java",
-            "src/main/java/com/yupi/yuaicodemother/core/parser/CodeParserExecutor.java",
-            "src/main/java/com/yupi/yuaicodemother/core/parser/HtmlCodeParser.java",
-            "src/main/java/com/yupi/yuaicodemother/core/parser/MultiFileCodeParser.java"
-          ],
-          "saver": [
-            "src/main/java/com/yupi/yuaicodemother/core/saver/CodeFileSaverExecutor.java",
-            "src/main/java/com/yupi/yuaicodemother/core/saver/CodeFileSaverTemplate.java",
-            "src/main/java/com/yupi/yuaicodemother/core/saver/HtmlCodeFileSaverTemplate.java",
-            "src/main/java/com/yupi/yuaicodemother/core/saver/MultiFileCodeFileSaverTemplate.java"
-          ],
-          "facade": [
-            "src/main/java/com/yupi/yuaicodemother/core/AiCodeGeneratorFacade.java",
-            "src/main/java/com/yupi/yuaicodemother/core/CodeFileSaver.java",
-            "src/main/java/com/yupi/yuaicodemother/core/CodeParser.java"
-          ]
+          "aiService": "src/main/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorService.java",
+          "aiFactory": "src/main/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorServiceFactory.java",
+          "facade": "src/main/java/com/yupi/yuaicodemother/core/AiCodeGeneratorFacade.java",
+          "parserExecutor": "src/main/java/com/yupi/yuaicodemother/core/parser/CodeParserExecutor.java",
+          "saverExecutor": "src/main/java/com/yupi/yuaicodemother/core/saver/CodeFileSaverExecutor.java",
+          "htmlParser": "src/main/java/com/yupi/yuaicodemother/core/parser/HtmlCodeParser.java",
+          "multiFileParser": "src/main/java/com/yupi/yuaicodemother/core/parser/MultiFileCodeParser.java",
+          "htmlSaver": "src/main/java/com/yupi/yuaicodemother/core/saver/HtmlCodeFileSaverTemplate.java",
+          "multiFileSaver": "src/main/java/com/yupi/yuaicodemother/core/saver/MultiFileCodeFileSaverTemplate.java"
         },
-        "config": [
-          "src/main/java/com/yupi/yuaicodemother/config/CorsConfig.java",
-          "src/main/java/com/yupi/yuaicodemother/config/JsonConfig.java"
-        ],
-        "exception": [
-          "src/main/java/com/yupi/yuaicodemother/exception/BusinessException.java",
-          "src/main/java/com/yupi/yuaicodemother/exception/ErrorCode.java",
-          "src/main/java/com/yupi/yuaicodemother/exception/GlobalExceptionHandler.java",
-          "src/main/java/com/yupi/yuaicodemother/exception/ThrowUtils.java"
-        ],
-        "aop": [
-          "src/main/java/com/yupi/yuaicodemother/aop/AuthInterceptor.java"
-        ],
-        "annotation": [
-          "src/main/java/com/yupi/yuaicodemother/annotation/AuthCheck.java"
-        ]
-      },
-      "tests": [
-        "src/test/java/com/yupi/yuaicodemother/YuAiCodeMotherApplicationTests.java",
-        "src/test/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorServiceTest.java",
-        "src/test/java/com/yupi/yuaicodemother/core/CodeParserTest.java",
-        "src/test/java/com/yupi/yuaicodemother/core/AiCodeGeneratorFacadeTest.java"
-      ],
-      "resources": {
-        "config": [
-          "src/main/resources/application.yml",
-          "src/main/resources/application-local.yml"
-        ],
         "prompts": [
           "src/main/resources/prompt/codegen-html-system-prompt.txt",
           "src/main/resources/prompt/codegen-multi-file-system-prompt.txt"
+        ],
+        "database": {
+          "initScript": "sql/create_table.sql",
+          "tables": ["user", "app"]
+        },
+        "tests": [
+          "src/test/java/com/yupi/yuaicodemother/ai/AiCodeGeneratorServiceTest.java",
+          "src/test/java/com/yupi/yuaicodemother/core/CodeParserTest.java",
+          "src/test/java/com/yupi/yuaicodemother/core/AiCodeGeneratorFacadeTest.java",
+          "src/test/java/com/yupi/yuaicodemother/YuAiCodeMotherApplicationTests.java"
+        ]
+      },
+      "apis": {
+        "user": [
+          "POST /user/register",
+          "POST /user/login",
+          "POST /user/logout",
+          "GET /user/get/login",
+          "POST /user/update",
+          "POST /user/list/page/vo",
+          "POST /user/admin/update"
+        ],
+        "app": [
+          "POST /app/add",
+          "POST /app/delete",
+          "POST /app/update",
+          "GET /app/get/vo",
+          "GET /app/my/list/page",
+          "GET /app/featured/list/page",
+          "POST /app/deploy",
+          "GET /app/chat-to-gen-code",
+          "POST /app/admin/delete",
+          "POST /app/admin/update",
+          "POST /app/list/page/vo"
+        ]
+      },
+      "coverage": {
+        "estimated": {
+          "totalFiles": 45,
+          "scannedFiles": 42,
+          "coveragePercent": 93
+        },
+        "scanned": [
+          "controllers", "services", "models", "mappers",
+          "core (facade/parser/saver)", "ai service", "config",
+          "exception", "enums", "tests", "prompts", "sql"
+        ],
+        "missing": [
+          "application-local.yml（已 gitignore）",
+          "部分 DTO 内部字段未逐一确认"
         ]
       }
     },
@@ -100,107 +113,50 @@
       "name": "frontend",
       "path": "yu-ai-code-mother-frontend",
       "language": "TypeScript",
-      "framework": "Vue 3.5.17 + Vite 7.0.0",
-      "entry": "src/main.ts",
+      "framework": "Vue 3.5",
+      "entry": "yu-ai-code-mother-frontend/src/main.ts",
       "documentPath": "./yu-ai-code-mother-frontend/CLAUDE.md",
       "structure": {
         "pages": [
           "src/pages/HomePage.vue",
-          "src/pages/admin/UserManagePage.vue",
           "src/pages/user/UserLoginPage.vue",
-          "src/pages/user/UserRegisterPage.vue"
+          "src/pages/user/UserRegisterPage.vue",
+          "src/pages/admin/UserManagePage.vue"
         ],
         "components": [
-          "src/components/GlobalFooter.vue",
-          "src/components/GlobalHeader.vue"
+          "src/components/GlobalHeader.vue",
+          "src/components/GlobalFooter.vue"
         ],
-        "layouts": [
-          "src/layouts/BasicLayout.vue"
-        ],
+        "layouts": ["src/layouts/BasicLayout.vue"],
+        "router": "src/router/index.ts",
+        "stores": ["src/stores/loginUser.ts"],
         "api": [
-          "src/api/index.ts",
-          "src/api/healthController.ts",
+          "src/api/appController.ts",
           "src/api/userController.ts",
+          "src/api/healthController.ts",
           "src/api/typings.d.ts"
         ],
-        "router": [
-          "src/router/index.ts"
-        ],
-        "stores": [
-          "src/stores/loginUser.ts"
-        ],
         "utils": [
-          "src/request.ts",
-          "src/access.ts"
+          "src/access.ts",
+          "src/request.ts"
         ]
       },
-      "config": {
-        "packageJson": "package.json",
-        "viteConfig": "vite.config.ts",
-        "openapiConfig": "openapi2ts.config.ts",
-        "eslintConfig": "eslint.config.ts"
+      "routes": [
+        { "path": "/", "component": "HomePage.vue", "auth": "public" },
+        { "path": "/user/login", "component": "UserLoginPage.vue", "auth": "public" },
+        { "path": "/user/register", "component": "UserRegisterPage.vue", "auth": "public" },
+        { "path": "/admin/userManage", "component": "UserManagePage.vue", "auth": "admin" }
+      ],
+      "coverage": {
+        "estimated": {
+          "totalFiles": 18,
+          "scannedFiles": 18,
+          "coveragePercent": 100
+        },
+        "missing": ["前端自动化测试"]
       }
     }
   ],
-  "techStack": {
-    "backend": {
-      "language": "Java 21",
-      "framework": "Spring Boot 3.5.4",
-      "orm": "MyBatis-Flex 1.11.1",
-      "ai": "LangChain4j 1.1.0",
-      "database": "MySQL",
-      "apiDoc": "Knife4j 4.4.0"
-    },
-    "frontend": {
-      "language": "TypeScript 5.8.0",
-      "framework": "Vue 3.5.17",
-      "build": "Vite 7.0.0",
-      "ui": "Ant Design Vue 4.2.6",
-      "stateManagement": "Pinia 3.0.3",
-      "http": "Axios 1.11.0"
-    }
-  },
-  "aiIntegration": {
-    "provider": "DeepSeek",
-    "model": "deepseek-chat",
-    "maxTokens": 8192,
-    "capabilities": [
-      "HTML 单文件代码生成",
-      "多文件代码生成 (HTML + CSS + JS)",
-      "流式响应支持"
-    ]
-  },
-  "coverage": {
-    "estimatedTotalFiles": 55,
-    "scannedFiles": 52,
-    "coveragePercent": 94.5,
-    "scannedModules": 2,
-    "totalModules": 2,
-    "moduleCoverage": {
-      "backend": {
-        "scanned": true,
-        "entryScanned": true,
-        "controllersScanned": true,
-        "servicesScanned": true,
-        "modelsScanned": true,
-        "testsScanned": true,
-        "configScanned": true,
-        "missing": []
-      },
-      "frontend": {
-        "scanned": true,
-        "entryScanned": true,
-        "pagesScanned": true,
-        "apiScanned": true,
-        "routerScanned": true,
-        "storesScanned": true,
-        "configScanned": true,
-        "missing": [
-          "前端自动化测试"
-        ]
-      }
-    }
-  },
   "ignored": {
     "patterns": [
       "node_modules/**",
@@ -208,10 +164,9 @@
       ".git/**",
       ".idea/**",
       "*.iml",
-      "*.iws",
-      "*.ipr",
       "dist/**",
-      "build/**"
+      "build/**",
+      "application-local.yml"
     ],
     "stats": {
       "node_modules": "已忽略（前端依赖）",
@@ -219,29 +174,32 @@
       ".idea": "已忽略（IDE 配置）"
     }
   },
+  "coverage": {
+    "totalEstimatedFiles": 63,
+    "totalScannedFiles": 60,
+    "overallCoveragePercent": 95
+  },
   "gaps": [
     {
-      "area": "数据库文档",
-      "description": "缺少数据库表结构详细文档",
-      "priority": "medium",
-      "suggestedPath": "docs/database.md"
-    },
-    {
-      "area": "API 文档",
-      "description": "缺少 API 接口详细说明文档",
-      "priority": "low",
-      "note": "已有 Knife4j 自动生成文档"
-    },
-    {
-      "area": "前端测试",
-      "description": "前端缺少自动化测试",
+      "area": "前端自动化测试",
+      "description": "前端缺少 Vitest + Vue Test Utils 测试",
       "priority": "medium"
+    },
+    {
+      "area": "部署服务配置",
+      "description": "DEPLOY_DOMAIN 硬编码为 http://localhost，生产环境需配置化",
+      "priority": "high"
+    },
+    {
+      "area": "DTO 字段文档",
+      "description": "AppAddRequest / AppUpdateRequest 等 DTO 内部字段未逐一扫描",
+      "priority": "low"
     }
   ],
   "truncated": false,
   "nextSteps": [
-    "补充数据库表结构文档",
-    "添加前端自动化测试",
-    "完善代码生成类型的扩展文档"
+    "将 DeployServiceImpl.DEPLOY_DOMAIN 改为可配置项",
+    "添加前端 Vitest 测试",
+    "扫描 src/main/java/.../model/dto/ 补充 DTO 字段说明"
   ]
 }

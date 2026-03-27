@@ -75,6 +75,11 @@ const originItems = [
     title: '首页',
   },
   {
+    key: '/admin/appManage',
+    label: '应用管理',
+    title: '应用管理',
+  },
+  {
     key: '/admin/userManage',
     label: '用户管理',
     title: '用户管理',

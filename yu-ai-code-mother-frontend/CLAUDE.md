@@ -8,6 +8,7 @@
 
 | 时间 | 操作 | 说明 |
 |------|------|------|
+| 2026-03-26 | 更新 | 补充 appController API、权限控制流程、stores 说明 |
 | 2026-03-12 21:20:45 | 初始化 | 创建前端模块文档 |
 
 ---
@@ -17,195 +18,124 @@
 前端模块负责提供用户交互界面，主要包括：
 - 用户注册与登录
 - 用户管理（管理员功能）
-- AI 代码生成界面
-- 健康检查展示
+- 应用管理（创建/查看/部署）
+- AI 代码流式生成展示（SSE）
 
 ---
 
 ## 入口与启动
 
-### 入口文件
-
-`src/main.ts` - Vue 应用入口，负责：
+`src/main.ts` 负责：
 - 创建 Vue 应用实例
-- 注册 Pinia 状态管理
-- 注册 Vue Router 路由
-- 注册 Ant Design Vue 组件库
-- 初始化权限控制（access.ts）
-
-### 启动命令
+- 注册 Pinia、Vue Router、Ant Design Vue
+- 导入 `src/access.ts` 初始化全局路由守卫
 
 ```bash
-# 开发环境
-npm run dev
-
-# 构建生产版本
+npm install
+npm run openapi2ts   # 需后端运行，生成 src/api/
+npm run dev          # http://localhost:5173
 npm run build
-
-# 生成 API 接口代码（需后端运行）
-npm run openapi2ts
+npm run lint
+npm run format
+npm run type-check
 ```
-
-### 开发服务器
-
-- 默认地址：`http://localhost:5173`
-- 自动热更新
 
 ---
 
-## 对外接口
+## 路由
 
-### 页面路由
+| 路径 | 组件 | 权限 | 说明 |
+|------|------|------|------|
+| `/` | `HomePage.vue` | 公开 | 首页 |
+| `/user/login` | `UserLoginPage.vue` | 公开 | 登录 |
+| `/user/register` | `UserRegisterPage.vue` | 公开 | 注册 |
+| `/admin/userManage` | `UserManagePage.vue` | admin | 用户管理 |
 
-| 路由路径 | 页面名称 | 组件文件 | 说明 |
-|---------|---------|---------|------|
-| `/` | 首页 | `HomePage.vue` | 项目首页 |
-| `/user/login` | 用户登录 | `UserLoginPage.vue` | 用户登录页面 |
-| `/user/register` | 用户注册 | `UserRegisterPage.vue` | 用户注册页面 |
-| `/admin/userManage` | 用户管理 | `UserManagePage.vue` | 管理员用户管理页面（需管理员权限） |
+路由守卫在 `src/access.ts`：首次加载时调用 `loginUserStore.fetchLoginUser()` 获取登录态；`/admin` 路径校验 `userRole === 'admin'`，否则跳转登录页。
 
-### API 接口
+---
 
-位于 `src/api/` 目录，由 `openapi2ts` 自动生成：
+## API 接口（src/api/）
 
-| 文件 | 说明 |
-|------|------|
-| `index.ts` | API 导出入口 |
-| `userController.ts` | 用户相关 API |
-| `healthController.ts` | 健康检查 API |
-| `typings.d.ts` | 类型定义 |
+由 `npm run openapi2ts` 从后端 OpenAPI 文档自动生成，勿手动修改。
+
+### appController.ts
+
+| 函数 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| `addApp` | POST | `/app/add` | 创建应用 |
+| `deleteApp` | POST | `/app/delete` | 删除应用 |
+| `updateApp` | POST | `/app/update` | 更新应用 |
+| `listMyAppByPage` | GET | `/app/my/list/page` | 我的应用分页 |
+| `listFeaturedAppByPage` | GET | `/app/featured/list/page` | 精选应用分页 |
+| `deployApp` | POST | `/app/deploy` | 部署应用 |
+| `chatToGenCode` | GET | `/app/chat-to-gen-code` | 流式生成代码（SSE） |
+| `adminDeleteApp` | POST | `/app/admin/delete` | 管理员删除 |
+| `adminUpdateApp` | POST | `/app/admin/update` | 管理员更新 |
+| `listAppByPage` | POST | `/app/list/page/vo` | 管理员分页查询 |
+
+### userController.ts
+
+| 函数 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| `userRegister` | POST | `/user/register` | 注册 |
+| `userLogin` | POST | `/user/login` | 登录 |
+| `userLogout` | POST | `/user/logout` | 退出 |
+| `getLoginUser` | GET | `/user/get/login` | 获取当前用户 |
+| `updateUser` | POST | `/user/update` | 更新个人信息 |
+| `listUserVOByPage` | POST | `/user/list/page/vo` | 分页查询（管理员）|
+
+---
+
+## 状态管理（src/stores/）
+
+### loginUser.ts
+
+```ts
+useLoginUserStore()  // Pinia store
+  .loginUser         // ref<API.LoginUserVO>，默认 { userName: '未登录' }
+  .fetchLoginUser()  // 从后端获取登录态
+  .setLoginUser()    // 手动更新登录用户
+```
+
+---
+
+## HTTP 请求封装（src/request.ts）
+
+基于 Axios 封装，统一配置：
+- `baseURL`：后端接口地址
+- 请求/响应拦截器
+- 自动携带 Cookie（`withCredentials: true`）
 
 ---
 
 ## 关键依赖与配置
 
-### package.json 核心依赖
-
-```json
-{
-  "dependencies": {
-    "ant-design-vue": "^4.2.6",  // UI 组件库
-    "axios": "^1.11.0",          // HTTP 客户端
-    "pinia": "^3.0.3",           // 状态管理
-    "vue": "^3.5.17",            // Vue 框架
-    "vue-router": "^4.5.1"       // 路由
-  },
-  "devDependencies": {
-    "@umijs/openapi": "^1.13.15", // OpenAPI 代码生成
-    "typescript": "~5.8.0",        // TypeScript
-    "vite": "^7.0.0",             // 构建工具
-    "vue-tsc": "^2.2.10"          // Vue TypeScript 检查
-  }
-}
-```
-
-### 配置文件
-
 | 文件 | 说明 |
 |------|------|
-| `vite.config.ts` | Vite 构建配置，设置路径别名 `@` |
-| `openapi2ts.config.ts` | API 代码生成配置 |
-| `eslint.config.ts` | ESLint 配置 |
+| `vite.config.ts` | Vite 构建配置（代理、别名 `@`）|
+| `openapi2ts.config.ts` | 指定 OpenAPI 文档地址和输出目录 |
+| `eslint.config.ts` | ESLint 规则 |
 | `tsconfig.json` | TypeScript 配置 |
-
-### API 生成配置
-
-```typescript
-// openapi2ts.config.ts
-export default {
-  requestLibPath: "import request from '@/request'",
-  schemaPath: 'http://localhost:8123/api/v3/api-docs',
-  serversPath: './src',
-}
-```
 
 ---
 
-## 数据模型
+## 数据模型（来自后端 OpenAPI 类型）
 
-### 状态管理 (Pinia)
-
-位于 `src/stores/` 目录：
-
-| 文件 | 说明 |
-|------|------|
-| `loginUser.ts` | 登录用户状态管理 |
-
-### 类型定义
-
-API 相关类型定义由 `openapi2ts` 自动生成在 `src/api/typings.d.ts`。
+`src/api/typings.d.ts` 包含所有请求/响应类型，主要：
+- `API.LoginUserVO`：当前登录用户（id、userName、userAvatar、userRole）
+- `API.AppVO`：应用视图对象（id、appName、cover、codeGenType、deployKey 等）
+- `API.AppAddRequest` / `API.AppUpdateRequest`：应用创建/更新请求
+- `API.BaseResponseLong` / `API.BaseResponseBoolean`：统一响应包装
 
 ---
 
 ## 测试与质量
 
-### 代码检查
-
-```bash
-# ESLint 检查并自动修复
-npm run lint
-
-# Prettier 格式化
-npm run format
-
-# TypeScript 类型检查
-npm run type-check
-```
-
-### 测试状态
-
-- 暂无自动化测试
-- 建议添加：Vitest + @vue/test-utils
-
----
-
-## 常见问题 (FAQ)
-
-### Q: 如何生成 API 接口代码？
-
-A: 确保后端服务运行在 `http://localhost:8123`，然后执行：
-```bash
-npm run openapi2ts
-```
-
-### Q: 如何添加新页面？
-
-A:
-1. 在 `src/pages/` 目录创建 Vue 组件
-2. 在 `src/router/index.ts` 添加路由配置
-3. 如需权限控制，在 `src/access.ts` 添加相应逻辑
-
-### Q: 如何调用后端 API？
-
-A: 使用自动生成的 API 接口：
-```typescript
-import { userController } from '@/api'
-
-// 调用登录接口
-const result = await userController.userLogin({
-  userAccount: 'xxx',
-  userPassword: 'xxx'
-})
-```
-
----
-
-## 相关文件清单
-
-| 文件路径 | 说明 |
-|---------|------|
-| `package.json` | 依赖配置 |
-| `vite.config.ts` | Vite 配置 |
-| `src/main.ts` | 应用入口 |
-| `src/App.vue` | 根组件 |
-| `src/router/index.ts` | 路由配置 |
-| `src/stores/loginUser.ts` | 用户状态 |
-| `src/request.ts` | Axios 封装 |
-| `src/access.ts` | 权限控制 |
-| `src/api/*.ts` | API 接口（自动生成） |
-| `src/pages/*.vue` | 页面组件 |
-| `src/components/*.vue` | 公共组件 |
-| `src/layouts/*.vue` | 布局组件 |
+- 暂无自动化测试，建议添加 Vitest + Vue Test Utils
+- ESLint（`eslint-plugin-vue` + `@vue/eslint-config-typescript`）
+- Prettier（格式化）
+- `vue-tsc`（TypeScript 类型检查）
 
 ---
 
@@ -214,28 +144,43 @@ const result = await userController.userLogin({
 ```
 yu-ai-code-mother-frontend/
 ├── src/
-│   ├── api/                    # API 接口（自动生成）
-│   ├── components/             # 公共组件
-│   │   ├── GlobalFooter.vue    # 全局页脚
-│   │   └── GlobalHeader.vue    # 全局页头
-│   ├── layouts/                # 布局组件
-│   │   └── BasicLayout.vue     # 基础布局
-│   ├── pages/                  # 页面组件
-│   │   ├── HomePage.vue        # 首页
-│   │   ├── admin/              # 管理员页面
-│   │   │   └── UserManagePage.vue
-│   │   └── user/               # 用户页面
-│   │       ├── UserLoginPage.vue
-│   │       └── UserRegisterPage.vue
-│   ├── router/                 # 路由配置
-│   ├── stores/                 # Pinia 状态管理
-│   ├── access.ts               # 权限控制
-│   ├── main.ts                 # 应用入口
-│   ├── request.ts              # HTTP 请求封装
-│   └── App.vue                 # 根组件
-├── eslint.config.ts            # ESLint 配置
-├── openapi2ts.config.ts        # API 生成配置
-├── package.json                # 依赖配置
-├── tsconfig.json               # TypeScript 配置
-└── vite.config.ts              # Vite 配置
+│   ├── api/                    # openapi2ts 自动生成
+│   │   ├── appController.ts
+│   │   ├── userController.ts
+│   │   ├── healthController.ts
+│   │   ├── index.ts
+│   │   └── typings.d.ts
+│   ├── components/
+│   │   ├── GlobalHeader.vue
+│   │   └── GlobalFooter.vue
+│   ├── layouts/
+│   │   └── BasicLayout.vue
+│   ├── pages/
+│   │   ├── HomePage.vue
+│   │   ├── admin/UserManagePage.vue
+│   │   └── user/UserLoginPage.vue + UserRegisterPage.vue
+│   ├── router/index.ts
+│   ├── stores/loginUser.ts
+│   ├── access.ts               # 全局路由守卫
+│   ├── request.ts              # Axios 封装
+│   ├── main.ts
+│   └── App.vue
+├── openapi2ts.config.ts
+├── vite.config.ts
+├── tsconfig.json
+├── eslint.config.ts
+└── package.json
 ```
+
+---
+
+## 常见问题 (FAQ)
+
+**Q: 修改后端接口后前端类型不同步？**
+A: 重新运行 `npm run openapi2ts`，会覆盖 `src/api/` 下所有自动生成文件。
+
+**Q: 如何新增页面？**
+A: 在 `src/pages/` 创建 `.vue` 文件，在 `src/router/index.ts` 添加路由，若需权限控制在 `src/access.ts` 中添加规则。
+
+**Q: 如何调用 SSE 流式接口？**
+A: `chatToGenCode` 接口返回 `text/event-stream`，需使用 `EventSource` 或 fetch + ReadableStream 处理，不能直接用 axios。
