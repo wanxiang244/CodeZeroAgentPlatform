@@ -82,7 +82,7 @@ const submitting = ref(false)
 const fetchAppDetail = async () => {
   if (!isEdit.value) return
 
-  const appId = Number(route.params.id)
+  const appId = route.params.id as string
   try {
     const response = await appController.getAppVOById({ id: appId })
     if (response.data) {
@@ -107,7 +107,7 @@ const handleSubmit = async () => {
 
     if (isEdit.value) {
       // 编辑应用
-      const appId = Number(route.params.id)
+      const appId = route.params.id as string
 
       // 管理员可以编辑所有字段，普通用户只能编辑应用名称和封面
       const updateData: any = {
@@ -134,10 +134,10 @@ const handleSubmit = async () => {
         initPrompt: form.initPrompt
       })
 
-      if (response.data) {
+      if (response.data?.data) {
         message.success('创建成功')
         // 跳转到对话页面并自动开始生成
-        router.push(`/app/chat/${response.data}`)
+        router.push(`/app/chat/${response.data.data}`)
       }
     }
   } catch (error) {

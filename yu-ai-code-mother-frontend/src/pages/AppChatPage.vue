@@ -85,7 +85,7 @@ interface Message {
 
 const route = useRoute()
 const router = useRouter()
-const appId = ref<number>(Number(route.params.id) || 0)
+const appId = ref<string>(String(route.params.id) || '')
 const app = ref<API.AppVO | null>(null)
 const messages = ref<Message[]>([])
 const userInput = ref('')
@@ -131,19 +131,26 @@ const startStreamGeneration = async (prompt: string) => {
   let accumulatedContent = ''
 
   try {
-    const eventSource = new EventSource(
-      `http://localhost:8123/api/app/chat-to-gen-code?appId=${appId.value}`
-    )
+    // 使用 EventSource，构造函数中传入 withCredentials
+    const url = `http://localhost:8123/api/app/chat-to-gen-code?appId=${appId.value}`
+    const eventSource = new EventSource(url, { withCredentials: true })
+
+    eventSource.onopen = () => {
+      console.log('SSE 连接成功')
+    }
 
     eventSource.onmessage = (event) => {
+      console.log('SSE 收到消息:', event.data)
       const data = event.data
       if (data === '[DONE]') {
         eventSource.close()
         loading.value = false
 
+        console.log('代码生成完成，设置预览URL:', app.value)
         // 生成完成后显示预览
-        if (app.value) {
+        if (app.value && app.value.codeGenType) {
           previewUrl.value = `http://localhost:8123/api/static/${app.value.codeGenType}_${appId.value}/`
+          console.log('预览URL:', previewUrl.value)
         }
 
         // 添加 AI 完成消息

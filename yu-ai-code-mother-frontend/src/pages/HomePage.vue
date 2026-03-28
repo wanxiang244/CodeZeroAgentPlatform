@@ -175,10 +175,10 @@ const handleCreateApp = async () => {
       initPrompt: promptInput.value.trim()
     })
 
-    if (response.data) {
+    if (response.data?.data) {
       message.success('应用创建成功')
       // 跳转到对话页面并自动开始生成
-      router.push(`/app/chat/${response.data}`)
+      router.push(`/app/chat/${response.data.data}`)
     }
   } catch (error) {
     message.error('创建应用失败')
@@ -235,7 +235,7 @@ const handleDeleteMyApp = async (app: API.AppVO) => {
 }
 
 // 页面跳转
-const goToAppChat = (appId: number) => {
+const goToAppChat = (appId: string | number) => {
   router.push(`/app/chat/${appId}`)
 }
 
