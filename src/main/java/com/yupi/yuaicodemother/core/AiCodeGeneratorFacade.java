@@ -129,6 +129,6 @@ public class AiCodeGeneratorFacade {
             } catch (Exception e) {
                 log.error("保存失败: {}", e.getMessage());
             }
-        });
+        }).concatWith(Flux.just("[DONE]"));
     }
 }
