@@ -135,28 +135,50 @@ const doLogout = async () => {
 
 <style scoped>
 .header {
-  background: #fff;
-  padding: 0 24px;
+  background: var(--color-bg-primary) !important;
+  padding: 0 var(--spacing-lg);
+  height: var(--header-height);
+  line-height: var(--header-height);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .logo {
-  height: 48px;
-  width: 48px;
+  height: 36px;
+  width: 36px;
 }
 
 .site-title {
   margin: 0;
-  font-size: 18px;
-  color: #1890ff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
 }
 
 .ant-menu-horizontal {
   border-bottom: none !important;
+  line-height: var(--header-height);
+}
+
+.user-login-status {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.user-login-status a {
+  text-decoration: none;
+  color: var(--color-text-primary);
+}
+
+.user-login-status a:hover {
+  opacity: 0.7;
 }
 </style>

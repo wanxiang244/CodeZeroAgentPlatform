@@ -242,11 +242,11 @@ onMounted(async () => {
 <style scoped>
 .app-chat-page {
   height: 100vh;
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-secondary);
 }
 
 .content {
-  padding: 20px;
+  padding: var(--spacing-lg);
   max-width: 1600px;
   margin: 0 auto;
 }
@@ -255,22 +255,21 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  margin-bottom: var(--spacing-lg);
 }
 
 .app-name {
-  font-size: 20px;
-  font-weight: bold;
-  color: #1890ff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
 }
 
 .main-content {
   display: flex;
-  gap: 20px;
+  gap: var(--spacing-lg);
   height: calc(100vh - 200px);
 }
 
@@ -278,54 +277,50 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
 .messages-container {
   flex: 1;
-  padding: 16px;
+  padding: var(--spacing-md);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
 }
 
 .message-item {
   max-width: 80%;
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: var(--spacing-md) var(--spacing-lg);
   word-wrap: break-word;
-  line-height: 1.5;
+  line-height: var(--line-height-relaxed);
+  border-radius: 0;
 }
 
 .user-message {
   align-self: flex-end;
-  background-color: #1890ff;
-  color: white;
-  border-bottom-right-radius: 4px;
+  background-color: var(--color-text-primary);
+  color: var(--color-bg-primary);
 }
 
 .ai-message {
   align-self: flex-start;
-  background-color: #f5f5f5;
-  color: #333;
-  border-bottom-left-radius: 4px;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
 }
 
 .input-container {
-  padding: 16px;
-  border-top: 1px solid #e8e8e8;
-  background: white;
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg-primary);
 }
 
 .preview-container {
   width: 500px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
 }
@@ -335,8 +330,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #999;
-  font-size: 16px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-md);
 }
 
 .preview-iframe {

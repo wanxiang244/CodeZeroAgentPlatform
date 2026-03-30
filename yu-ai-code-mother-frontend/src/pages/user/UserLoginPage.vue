@@ -59,27 +59,48 @@ const handleSubmit = async (values: any) => {
   }
 }
 </script>
-<style>
+<style scoped>
 #userLoginPage {
-  max-width: 480px;
+  max-width: 400px;
   margin: 0 auto;
+  padding: var(--spacing-xxl) var(--spacing-lg);
 }
 
 .title {
   text-align: center;
-  margin-bottom: 16px;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-sm);
+  letter-spacing: -0.5px;
 }
 
 .desc {
   text-align: center;
-  color: #bbb;
-  margin-bottom: 16px;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--spacing-xxl);
+  font-size: var(--font-size-base);
 }
 
 .tips {
   text-align: right;
-  color: #bbb;
-  font-size: 13px;
-  margin-bottom: 16px;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.tips a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  font-weight: var(--font-weight-medium);
+}
+
+.ant-form-item {
+  margin-bottom: var(--spacing-lg);
+}
+
+.ant-btn-primary {
+  height: 44px;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
 }
 </style>

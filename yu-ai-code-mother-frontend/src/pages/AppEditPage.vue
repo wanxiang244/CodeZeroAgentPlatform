@@ -163,6 +163,33 @@ onMounted(() => {
 
 <style scoped>
 .app-edit-page {
-  min-height: 100vh;
+  min-height: 100%;
+}
+
+.app-edit-page :deep(.ant-card) {
+  margin: 0;
+  border: none;
+}
+
+.app-edit-page :deep(.ant-card-head) {
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--spacing-md) 0;
+}
+
+.app-edit-page :deep(.ant-card-head-title) {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+}
+
+.app-edit-page :deep(.ant-form-item) {
+  margin-bottom: var(--spacing-lg);
+}
+
+.app-edit-page :deep(.ant-form-item-label > label) {
+  font-weight: var(--font-weight-medium);
+}
+
+.app-edit-page :deep(.ant-input-textarea textarea) {
+  min-height: 120px;
 }
 </style>

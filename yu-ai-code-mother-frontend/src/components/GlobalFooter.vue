@@ -21,18 +21,25 @@
 
 <style scoped>
 .footer {
-  background: #efefef;
+  background: var(--color-bg-primary) !important;
   text-align: center;
-  padding: 20px;
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  padding: var(--spacing-lg) !important;
+  border-top: 1px solid var(--color-border-light);
 }
 
 .copyright {
   margin: 0;
-  color: #666;
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.author-link {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.author-link:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
 }
 </style>

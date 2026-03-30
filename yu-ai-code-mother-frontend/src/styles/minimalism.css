@@ -1,0 +1,400 @@
+/* Core Minimalism - Ant Design Vue Overrides */
+
+/* ==========================================================================
+   Base Reset & Typography
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+body {
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
+  line-height: var(--line-height-base);
+}
+
+a {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+  transition: opacity var(--transition-duration) var(--transition-timing);
+}
+
+a:hover {
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.ant-btn {
+  border-radius: 0 !important;
+  font-weight: var(--font-weight-medium);
+  transition: all var(--transition-duration) var(--transition-timing);
+}
+
+.ant-btn-default {
+  background-color: var(--color-bg-primary);
+  border: 1px solid var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.ant-btn-default:hover,
+.ant-btn-default:focus {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg-primary);
+}
+
+.ant-btn-primary {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+  border-radius: 0 !important;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background-color: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.ant-btn-link {
+  border: none;
+  padding: 0;
+  height: auto;
+}
+
+.ant-btn-link:hover {
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Form Inputs
+   ========================================================================== */
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 0 !important;
+  border: none !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background-color: transparent !important;
+  transition: border-color var(--transition-duration) var(--transition-timing);
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-input-number:hover,
+.ant-select-selector:hover,
+.ant-picker:hover {
+  border-bottom-color: var(--color-text-secondary) !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-number-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-bottom-color: var(--color-accent) !important;
+  box-shadow: none !important;
+}
+
+.ant-input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+/* Input wrapper */
+.ant-input-affix-wrapper {
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.ant-input-affix-wrapper .ant-input {
+  border: none !important;
+}
+
+/* Select */
+.ant-select-dropdown {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+}
+
+.ant-select-item {
+  border-radius: 0 !important;
+}
+
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.ant-card {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+  box-shadow: none !important;
+  background-color: var(--color-bg-primary);
+  transition: border-color var(--transition-duration) var(--transition-timing);
+}
+
+.ant-card:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.ant-card-head {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.ant-card-head-title {
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+.ant-table {
+  background: var(--color-bg-primary);
+  border-radius: 0 !important;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--color-bg-secondary) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  font-weight: var(--font-weight-medium);
+  border-radius: 0 !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--color-border-light) !important;
+  border-radius: 0 !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--color-bg-secondary) !important;
+}
+
+.ant-table-wrapper .ant-table-pagination.ant-pagination {
+  margin: var(--spacing-lg) 0;
+}
+
+/* ==========================================================================
+   Menu
+   ========================================================================== */
+
+.ant-menu {
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.ant-menu-horizontal > .ant-menu-item-selected::after {
+  border-bottom-color: var(--color-accent) !important;
+}
+
+.ant-menu-horizontal > .ant-menu-item,
+.ant-menu-horizontal > .ant-menu-submenu {
+  border-radius: 0 !important;
+}
+
+.ant-menu-item-selected {
+  color: var(--color-text-primary) !important;
+  font-weight: var(--font-weight-medium);
+}
+
+.ant-menu-item-selected a,
+.ant-menu-item-selected a:hover {
+  color: var(--color-text-primary) !important;
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.ant-layout {
+  background: var(--color-bg-primary);
+}
+
+.ant-layout-header {
+  background: var(--color-bg-primary) !important;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.ant-layout-footer {
+  background: var(--color-bg-primary) !important;
+  border-top: 1px solid var(--color-border-light);
+  padding: var(--spacing-lg) !important;
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.ant-pagination-item {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+}
+
+.ant-pagination-item-active {
+  border-color: var(--color-accent);
+}
+
+.ant-pagination-item-active a {
+  color: var(--color-text-primary);
+}
+
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   Dropdown
+   ========================================================================== */
+
+.ant-dropdown-menu {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+  box-shadow: none !important;
+  padding: var(--spacing-xs) 0;
+}
+
+.ant-dropdown-menu-item {
+  border-radius: 0 !important;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+/* ==========================================================================
+   Modal
+   ========================================================================== */
+
+.ant-modal-content {
+  border-radius: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.ant-modal-header {
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.ant-modal-title {
+  font-weight: var(--font-weight-medium);
+}
+
+.ant-modal-footer {
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ==========================================================================
+   Form
+   ========================================================================== */
+
+.ant-form-item-label > label {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.ant-form-item-explain-error {
+  color: #ff4d4f;
+  font-size: var(--font-size-sm);
+}
+
+/* ==========================================================================
+   Message
+   ========================================================================== */
+
+.ant-message-notice-content {
+  border-radius: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ==========================================================================
+   Avatar
+   ========================================================================== */
+
+.ant-avatar {
+  border-radius: 0 !important;
+  background-color: var(--color-bg-tertiary);
+}
+
+/* ==========================================================================
+   Tags
+   ========================================================================== */
+
+.ant-tag {
+  border-radius: 0 !important;
+  border: 1px solid var(--color-border);
+}
+
+/* ==========================================================================
+   Empty
+   ========================================================================== */
+
+.ant-empty-description {
+  color: var(--color-text-tertiary);
+}
+
+/* ==========================================================================
+   Divider
+   ========================================================================== */
+
+.ant-divider {
+  border-top-color: var(--color-border);
+}
+
+/* ==========================================================================
+   Switch
+   ========================================================================== */
+
+.ant-switch {
+  border-radius: 0 !important;
+}
+
+.ant-switch-checked {
+  background-color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Checkbox
+   ========================================================================== */
+
+.ant-checkbox-inner {
+  border-radius: 0 !important;
+  border-color: var(--color-border);
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+  background-color: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Radio
+   ========================================================================== */
+
+.ant-radio-inner {
+  border-radius: 0 !important;
+  border-color: var(--color-border);
+}
+
+.ant-radio-checked .ant-radio-inner {
+  border-color: var(--color-accent);
+}
+
+.ant-radio-checked .ant-radio-inner::after {
+  background-color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Tooltip & Popover
+   ========================================================================== */
+
+.ant-tooltip-inner,
+.ant-popover-inner {
+  border-radius: 0 !important;
+}

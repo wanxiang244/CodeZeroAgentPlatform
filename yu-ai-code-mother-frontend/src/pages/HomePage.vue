@@ -19,9 +19,9 @@
     </div>
 
     <!-- 我的应用分页列表 -->
-    <div class="my-apps-section" style="padding: 20px">
-      <h2 style="margin-bottom: 20px">我的应用</h2>
-      <div v-if="myAppList.length === 0" style="text-align: center; color: #999; padding: 40px 0">
+    <div class="my-apps-section">
+      <h2>我的应用</h2>
+      <div v-if="myAppList.length === 0" class="empty-state">
         暂无应用，快去创建一个吧！
       </div>
       <div v-else>
@@ -36,20 +36,18 @@
             style="margin-bottom: 16px"
           >
             <a-card
-              hoverable
+              class="app-card"
               @click="goToAppChat(app.id)"
-              style="cursor: pointer"
             >
               <template #cover>
                 <img
                   v-if="app.cover"
                   :src="app.cover"
                   alt="封面"
-                  style="height: 150px; object-fit: cover"
                 />
                 <div
                   v-else
-                  style="height: 150px; background: #f5f5f5; display: flex; align-items: center; justify-content: center"
+                  class="app-cover-placeholder"
                 >
                   <span>无封面</span>
                 </div>
@@ -68,20 +66,20 @@
         <!-- 分页器 -->
         <a-pagination
           v-if="myPagination.total > myPagination.pageSize"
+          class="pagination-wrapper"
           v-model:current="myPagination.current"
           v-model:pageSize="myPagination.pageSize"
           :total="myPagination.total"
           show-size-changer
           @change="handleMyAppPageChange"
-          style="text-align: center; margin-top: 20px"
         />
       </div>
     </div>
 
     <!-- 精选应用分页列表 -->
-    <div class="featured-apps-section" style="padding: 20px; background: #f9f9f9">
-      <h2 style="margin-bottom: 20px">精选应用</h2>
-      <div v-if="featuredAppList.length === 0" style="text-align: center; color: #999; padding: 40px 0">
+    <div class="featured-apps-section">
+      <h2>精选应用</h2>
+      <div v-if="featuredAppList.length === 0" class="empty-state">
         暂无精选应用
       </div>
       <div v-else>
@@ -96,20 +94,18 @@
             style="margin-bottom: 16px"
           >
             <a-card
-              hoverable
+              class="app-card"
               @click="goToAppChat(app.id)"
-              style="cursor: pointer"
             >
               <template #cover>
                 <img
                   v-if="app.cover"
                   :src="app.cover"
                   alt="封面"
-                  style="height: 150px; object-fit: cover"
                 />
                 <div
                   v-else
-                  style="height: 150px; background: #f5f5f5; display: flex; align-items: center; justify-content: center"
+                  class="app-cover-placeholder"
                 >
                   <span>无封面</span>
                 </div>
@@ -122,12 +118,12 @@
         <!-- 分页器 -->
         <a-pagination
           v-if="featuredPagination.total > featuredPagination.pageSize"
+          class="pagination-wrapper"
           v-model:current="featuredPagination.current"
           v-model:pageSize="featuredPagination.pageSize"
           :total="featuredPagination.total"
           show-size-changer
           @change="handleFeaturedAppPageChange"
-          style="text-align: center; margin-top: 20px"
         />
       </div>
     </div>
@@ -265,6 +261,122 @@ onMounted(() => {
 
 <style scoped>
 .home-page {
-  min-height: 100vh;
+  min-height: 100%;
+}
+
+/* Hero Section */
+.hero-section {
+  text-align: center;
+  padding: var(--spacing-xxxl) var(--spacing-lg);
+  background: var(--color-bg-primary);
+}
+
+.hero-section h1 {
+  font-size: var(--font-size-xxxl);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing-md);
+  letter-spacing: -1px;
+}
+
+.hero-section p {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--spacing-xl);
+}
+
+.hero-section .ant-input-search {
+  max-width: 800px;
+  width: 100%;
+}
+
+.hero-section .ant-input-search .ant-input-search-button {
+  border-radius: 0 !important;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.hero-section .ant-input-search .ant-input-search-button:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+/* Section titles */
+.my-apps-section,
+.featured-apps-section {
+  padding: var(--spacing-xl) 0;
+}
+
+.my-apps-section h2,
+.featured-apps-section h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-xxl) 0;
+  font-size: var(--font-size-base);
+}
+
+/* App Cards */
+.app-card {
+  cursor: pointer;
+  transition: border-color var(--transition-duration) var(--transition-timing);
+  background: var(--color-bg-primary);
+}
+
+.app-card:hover {
+  border-color: var(--color-text-secondary);
+}
+
+.app-card .ant-card-cover {
+  height: 150px;
+  overflow: hidden;
+}
+
+.app-card .ant-card-cover img {
+  object-fit: cover;
+}
+
+.app-card .ant-card-meta-title {
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+}
+
+.app-card .ant-card-actions {
+  background: var(--color-bg-primary);
+}
+
+.app-card .ant-card-actions li {
+  margin: var(--spacing-sm) 0;
+}
+
+/* Featured section background */
+.featured-apps-section {
+  background: var(--color-bg-secondary);
+}
+
+/* Pagination */
+.pagination-wrapper {
+  text-align: center;
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* Card cover placeholder */
+.app-cover-placeholder {
+  height: 150px;
+  background: var(--color-bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
 }
 </style>
