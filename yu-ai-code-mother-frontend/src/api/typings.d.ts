@@ -19,7 +19,7 @@ declare namespace API {
     pageSize?: number
     sortField?: string
     sortOrder?: string
-    id?: number
+    id?: string
     appName?: string
     codeGenType?: string
     userId?: number
@@ -41,7 +41,7 @@ declare namespace API {
     deployKey?: string
     deployedTime?: string
     priority?: number
-    userId?: string
+    userId?: number
     createTime?: string
     updateTime?: string
   }
@@ -66,7 +66,7 @@ declare namespace API {
 
   type BaseResponseLong = {
     code?: number
-    data?: string
+    data?: string | number
     message?: string
   }
 
@@ -112,7 +112,7 @@ declare namespace API {
     appId: string
   }
 
-  type getAppByIdParams = {
+  type getAppVOByIdByAdminParams = {
     id: string
   }
 
@@ -165,6 +165,10 @@ declare namespace API {
     totalPage?: number
     totalRow?: number
     optimizeCountQuery?: boolean
+  }
+
+  type serveStaticResourceParams = {
+    deployKey: string
   }
 
   type User = {

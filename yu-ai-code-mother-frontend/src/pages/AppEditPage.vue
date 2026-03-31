@@ -6,8 +6,8 @@
         :rules="rules"
         ref="formRef"
         @finish="handleSubmit"
-        label-col="{ span: 4 }"
-        wrapper-col="{ span: 16 }"
+        :label-col="{ span: 4 }"
+        :wrapper-col="{ span: 16 }"
       >
         <a-form-item label="应用名称" name="appName">
           <a-input v-model:value="form.appName" placeholder="请输入应用名称" />
@@ -45,7 +45,6 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRouter, useRoute } from 'vue-router'
 import * as appController from '@/api/appController'
-import * as userController from '@/api/userController'
 import type { API } from '@/api/typings'
 import { useLoginUserStore } from '@/stores/loginUser'
 
@@ -78,18 +77,32 @@ const rules = {
 
 const submitting = ref(false)
 
+const getRouteAppId = (): string | null => {
+  const routeId = route.params.id
+  return typeof routeId === 'string' && routeId ? routeId : null
+}
+
 // 获取应用详情（编辑模式）
 const fetchAppDetail = async () => {
   if (!isEdit.value) return
 
-  const appId = route.params.id as string
+  const appId = getRouteAppId()
+  if (!appId) {
+    message.error('应用 id 无效')
+    router.back()
+    return
+  }
   try {
-    const response = await appController.getAppVOById({ id: appId })
-    if (response.data) {
+    // 管理员使用 admin 接口，普通用户使用普通接口
+    const response = isAdmin.value
+      ? await appController.getAppVoByIdByAdmin({ id: appId })
+      : await appController.getAppVoById({ id: appId })
+
+    if (response.data?.data) {
       Object.assign(form, {
-        appName: response.data.appName || '',
-        cover: response.data.cover || '',
-        priority: response.data.priority || 0
+        appName: response.data.data.appName || '',
+        cover: response.data.data.cover || '',
+        priority: response.data.data.priority || 0
       })
     }
   } catch (error) {
@@ -107,7 +120,11 @@ const handleSubmit = async () => {
 
     if (isEdit.value) {
       // 编辑应用
-      const appId = route.params.id as string
+      const appId = getRouteAppId()
+      if (!appId) {
+        message.error('应用 id 无效')
+        return
+      }
 
       // 管理员可以编辑所有字段，普通用户只能编辑应用名称和封面
       const updateData: any = {
@@ -124,13 +141,14 @@ const handleSubmit = async () => {
         ? await appController.adminUpdateApp(updateData)
         : await appController.updateApp(updateData)
 
-      if (response.data) {
+      if (response.data?.data) {
         message.success('更新成功')
         router.push(`/app/chat/${appId}`)
       }
     } else {
       // 创建应用
       const response = await appController.addApp({
+        appName: form.appName || undefined,
         initPrompt: form.initPrompt
       })
 

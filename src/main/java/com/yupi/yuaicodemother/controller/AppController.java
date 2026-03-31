@@ -156,8 +156,8 @@ public class AppController {
      * @param request HTTP 请求
      * @return 应用详情
      */
-    @GetMapping("/get")
-    public BaseResponse<AppVO> getAppById(@RequestParam Long id, HttpServletRequest request) {
+    @GetMapping("/get/vo")
+    public BaseResponse<AppVO> getAppVOById(@RequestParam Long id, HttpServletRequest request) {
         ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
 
         // 查询应用是否存在
@@ -274,9 +274,9 @@ public class AppController {
      * @param id 应用 id
      * @return 应用详情
      */
-    @GetMapping("/get/vo")
+    @GetMapping("admin/get/vo")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
-    public BaseResponse<AppVO> getAppVOById(@RequestParam long id) {
+    public BaseResponse<AppVO> getAppVOByIdByAdmin(@RequestParam long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         App app = appService.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);

@@ -26,6 +26,21 @@ export async function adminDeleteApp(body: API.AppDeleteRequest, options?: { [ke
   })
 }
 
+/** 此处后端没有提供注释 GET /app/admin/get/vo */
+export async function getAppVoByIdByAdmin(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.getAppVOByIdByAdminParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseAppVO>('/app/admin/get/vo', {
+    method: 'GET',
+    params: {
+      ...params,
+    },
+    ...(options || {}),
+  })
+}
+
 /** 此处后端没有提供注释 POST /app/admin/update */
 export async function adminUpdateApp(
   body: API.AdminAppUpdateRequest,
@@ -96,21 +111,6 @@ export async function listFeaturedAppByPage(
       pageNum: '1',
       // pageSize has a default value: 10
       pageSize: '10',
-      ...params,
-    },
-    ...(options || {}),
-  })
-}
-
-/** 此处后端没有提供注释 GET /app/get */
-export async function getAppById(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getAppByIdParams,
-  options?: { [key: string]: any }
-) {
-  return request<API.BaseResponseAppVO>('/app/get', {
-    method: 'GET',
-    params: {
       ...params,
     },
     ...(options || {}),

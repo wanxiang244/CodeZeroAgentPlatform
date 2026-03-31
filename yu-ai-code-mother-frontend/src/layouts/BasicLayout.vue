@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <GlobalHeader />
     <!-- 主要内容区域 -->
-    <a-layout-content class="main-content">
+    <a-layout-content id="main-content" class="main-content" tabindex="-1">
       <router-view />
     </a-layout-content>
     <!-- 底部版权信息 -->

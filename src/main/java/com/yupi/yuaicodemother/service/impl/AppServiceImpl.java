@@ -69,12 +69,15 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         String codeGenType = appQueryRequest.getCodeGenType();
         String sortField = appQueryRequest.getSortField();
         String sortOrder = appQueryRequest.getSortOrder();
-        return QueryWrapper.create()
+        QueryWrapper queryWrapper = QueryWrapper.create()
                 .eq("id", id)
                 .eq("userId", userId)
                 .like("appName", appName)
-                .eq("codeGenType", codeGenType)
-                .orderBy(sortField, "ascend".equals(sortOrder));
+                .eq("codeGenType", codeGenType);
+        if (StrUtil.isNotBlank(sortField)) {
+            queryWrapper.orderBy(sortField, "ascend".equals(sortOrder));
+        }
+        return queryWrapper;
     }
 
     @Override
@@ -126,19 +129,18 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 限制每页最多 20 条
         pageSize = Math.min(pageSize, 20);
 
-        // 构建查询条件：优先级大于 0 的应用为精选应用，或者当前用户自己的应用
+        // 构建查询条件：优先级等于 99 的应用为精选应用
         QueryWrapper queryWrapper;
         if (userId != null) {
             // 有登录用户：精选应用 + 自己的应用
             queryWrapper = QueryWrapper.create()
-                    .where("priority > ? OR userId = ?", 0, userId)
+                    .where("priority = ?", 99)
                     .orderBy("priority", false)
                     .orderBy("createTime", false);
         } else {
             // 未登录用户：仅精选应用
             queryWrapper = QueryWrapper.create()
-                    .where("priority > ?", 0)
-                    .orderBy("priority", false)
+                    .where("priority = ?", 99)
                     .orderBy("createTime", false);
         }
 

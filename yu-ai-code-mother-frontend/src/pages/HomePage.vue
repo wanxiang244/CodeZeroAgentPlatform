@@ -235,7 +235,11 @@ const goToAppChat = (appId: string | number) => {
   router.push(`/app/chat/${appId}`)
 }
 
-const goToAppEdit = (appId: number) => {
+const goToAppEdit = (appId: string | number | undefined) => {
+  if (appId === undefined || appId === null) {
+    message.error('应用 id 无效')
+    return
+  }
   router.push(`/app/edit/${appId}`)
 }
 

@@ -26,6 +26,7 @@
         :pagination="pagination"
         :loading="loading"
         row-key="id"
+        table-layout="fixed"
         @change="handleTableChange"
       >
         <template #bodyCell="{ column, record }">
@@ -95,13 +96,13 @@ const pagination = reactive({
 // 表格列配置
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id' },
-  { title: '应用名称', dataIndex: 'appName', key: 'appName' },
-  { title: '封面', key: 'cover', width: 80 },
+  { title: '应用名称', dataIndex: 'appName', key: 'appName', width: '15%' },
+  { title: '封面', key: 'cover', width: '10%' },
   { title: '代码生成类型', dataIndex: 'codeGenType', key: 'codeGenType' },
   { title: '部署Key', dataIndex: 'deployKey', key: 'deployKey' },
   { title: '部署时间', key: 'deployedTime' },
   { title: '优先级', dataIndex: 'priority', key: 'priority' },
-  { title: '用户ID', dataIndex: 'userId', key: 'userId' },
+  //{ title: '用户ID', dataIndex: 'userId', key: 'userId' },
   { title: '创建时间', key: 'createTime' },
   { title: '更新时间', key: 'updateTime' },
   { title: '操作', key: 'action', width: 150 }

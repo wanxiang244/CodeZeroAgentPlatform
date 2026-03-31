@@ -25,12 +25,22 @@
               class="message-item"
               :class="{ 'user-message': message.role === 'user', 'ai-message': message.role === 'assistant' }"
             >
-              <div class="message-content">
+              <div
+                v-if="message.role === 'user'"
+                class="message-content"
+              >
                 {{ message.content }}
               </div>
+              <div
+                v-else
+                class="message-content markdown-body"
+                v-html="renderMarkdown(message.content)"
+              ></div>
             </div>
             <div v-if="loading" class="message-item ai-message">
-              <div class="message-content">AI 正在生成代码...</div>
+              <div class="message-content markdown-body">
+                AI 正在生成代码...
+              </div>
             </div>
           </div>
 
@@ -73,10 +83,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { getAppById, chatToGenCode } from '@/api/appController'
-import { deployApp } from '@/api/appController'
+import { getAppVoById, deployApp } from '@/api/appController'
+import { renderMarkdown } from '@/utils/markdown'
+import 'highlight.js/styles/github-dark.css'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -84,8 +95,10 @@ interface Message {
 }
 
 const route = useRoute()
-const router = useRouter()
-const appId = ref<string>(String(route.params.id) || '')
+const routeAppId = route.params.id
+const appId = ref<string | null>(
+  typeof routeAppId === 'string' && routeAppId ? routeAppId : null
+)
 const app = ref<API.AppVO | null>(null)
 const messages = ref<Message[]>([])
 const userInput = ref('')
@@ -96,12 +109,13 @@ const messagesContainer = ref<HTMLDivElement | null>(null)
 
 // 获取应用详情
 const fetchApp = async () => {
-  if (!appId.value) return
+  const currentAppId = appId.value
+  if (!currentAppId) return
 
   try {
-    const response = await getAppById({ id: appId.value })
+    const response = await getAppVoById({ id: currentAppId })
     if (response.data && response.data.code === 0) {
-      app.value = response.data.data
+      app.value = response.data.data ?? null
     }
   } catch (error) {
     console.error('获取应用详情失败:', error)
@@ -125,14 +139,15 @@ const initConversation = async () => {
 
 // 开始流式生成
 const startStreamGeneration = async (prompt: string) => {
-  if (!appId.value) return
+  const currentAppId = appId.value
+  if (!currentAppId) return
 
   loading.value = true
   let accumulatedContent = ''
 
   try {
     // 使用 EventSource，构造函数中传入 withCredentials
-    const url = `http://localhost:8123/api/app/chat-to-gen-code?appId=${appId.value}`
+    const url = `http://localhost:8123/api/app/chat-to-gen-code?appId=${currentAppId}`
     const eventSource = new EventSource(url, { withCredentials: true })
 
     eventSource.onopen = () => {
@@ -149,7 +164,7 @@ const startStreamGeneration = async (prompt: string) => {
         console.log('代码生成完成，设置预览URL:', app.value)
         // 生成完成后显示预览
         if (app.value && app.value.codeGenType) {
-          previewUrl.value = `http://localhost:8123/api/static/${app.value.codeGenType}_${appId.value}/`
+          previewUrl.value = `http://localhost:8123/api/static/${app.value.codeGenType}_${currentAppId}/`
           console.log('预览URL:', previewUrl.value)
         }
 
@@ -206,11 +221,12 @@ const handleSend = async () => {
 
 // 部署应用
 const handleDeploy = async () => {
-  if (!appId.value) return
+  const currentAppId = appId.value
+  if (!currentAppId) return
 
   deployLoading.value = true
   try {
-    const response = await deployApp({ appId: appId.value })
+    const response = await deployApp({ appId: currentAppId })
     if (response.data && response.data.code === 0) {
       const deployUrl = response.data.data
       message.success(`部署成功！访问地址: ${deployUrl}`)
@@ -289,26 +305,122 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
 }
 
 .message-item {
+  display: flex;
+  width: 100%;
+}
+
+.message-content {
   max-width: 80%;
   padding: var(--spacing-md) var(--spacing-lg);
-  word-wrap: break-word;
+  border-radius: 16px;
   line-height: var(--line-height-relaxed);
-  border-radius: 0;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+  word-break: break-word;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .user-message {
   align-self: flex-end;
-  background-color: var(--color-text-primary);
-  color: var(--color-bg-primary);
+  justify-content: flex-end;
 }
 
 .ai-message {
   align-self: flex-start;
-  background-color: var(--color-bg-tertiary);
+  justify-content: flex-start;
+}
+
+.user-message .message-content {
+  background: linear-gradient(135deg, var(--color-text-primary), #6366f1);
+  color: var(--color-bg-primary);
+}
+
+.ai-message .message-content {
+  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.3);
   color: var(--color-text-primary);
+  backdrop-filter: blur(6px);
+}
+
+.markdown-body {
+  font-size: var(--font-size-sm);
+  line-height: 1.7;
+  color: inherit;
+}
+
+.markdown-body p {
+  margin: 0 0 var(--spacing-sm);
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 0 0 var(--spacing-sm) 1.2em;
+  padding-left: 1.2em;
+}
+
+.markdown-body li + li {
+  margin-top: 4px;
+}
+
+.markdown-body blockquote {
+  margin: var(--spacing-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-left: 3px solid var(--color-border);
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.markdown-body code {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 13px;
+}
+
+.markdown-body :not(pre) > code {
+  padding: 0.15em 0.35em;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #e0e7ff;
+}
+
+.markdown-body pre {
+  margin: var(--spacing-md) 0;
+  padding: var(--spacing-md);
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 14px;
+  overflow-x: auto;
+}
+
+.markdown-body pre code {
+  display: block;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--spacing-md) 0;
+  font-size: 13px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
 }
 
 .input-container {
