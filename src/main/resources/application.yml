@@ -24,6 +24,9 @@ knife4j:
   enable: true
   setting:
     language: zh_cn
+app:
+  deploy:
+    domain: ${APP_DEPLOY_DOMAIN:http://localhost}
 # AI
 langchain4j:
   open-ai:

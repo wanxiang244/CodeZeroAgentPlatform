@@ -86,6 +86,7 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { getAppVoById, deployApp } from '@/api/appController'
+import { API_BASE_URL, APP_PREVIEW_BASE_URL } from '@/config/env'
 import { renderMarkdown } from '@/utils/markdown'
 import 'highlight.js/styles/github-dark.css'
 
@@ -147,7 +148,7 @@ const startStreamGeneration = async (prompt: string) => {
 
   try {
     // 使用 EventSource，构造函数中传入 withCredentials
-    const url = `http://localhost:8123/api/app/chat-to-gen-code?appId=${currentAppId}`
+    const url = `${API_BASE_URL}/app/chat-to-gen-code?appId=${currentAppId}`
     const eventSource = new EventSource(url, { withCredentials: true })
 
     eventSource.onopen = () => {
@@ -164,7 +165,7 @@ const startStreamGeneration = async (prompt: string) => {
         console.log('代码生成完成，设置预览URL:', app.value)
         // 生成完成后显示预览
         if (app.value && app.value.codeGenType) {
-          previewUrl.value = `http://localhost:8123/api/static/${app.value.codeGenType}_${currentAppId}/`
+          previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${currentAppId}/`
           console.log('预览URL:', previewUrl.value)
         }
 
@@ -262,19 +263,18 @@ onMounted(async () => {
 }
 
 .content {
-  padding: var(--spacing-lg);
-  max-width: 1600px;
-  margin: 0 auto;
+  height: 100vh;
+  padding: 0;
 }
 
 .top-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
+  min-height: 56px;
+  padding: 0 var(--spacing-md);
   background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
-  margin-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .app-name {
@@ -284,27 +284,28 @@ onMounted(async () => {
 }
 
 .main-content {
-  display: flex;
-  gap: var(--spacing-lg);
-  height: calc(100vh - 200px);
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 0;
+  height: calc(100vh - 56px);
 }
 
 .chat-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
   overflow: hidden;
+  min-width: 0;
 }
 
 .messages-container {
   flex: 1;
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
 }
 
@@ -424,17 +425,16 @@ onMounted(async () => {
 }
 
 .input-container {
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
   border-top: 1px solid var(--color-border-light);
   background: var(--color-bg-primary);
 }
 
 .preview-container {
-  width: 500px;
   background: var(--color-bg-primary);
-  border: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .preview-placeholder {
@@ -454,12 +454,18 @@ onMounted(async () => {
 
 @media (max-width: 1200px) {
   .main-content {
-    flex-direction: column;
+    grid-template-columns: 1fr;
+    height: auto;
   }
 
   .preview-container {
     width: 100%;
     height: 400px;
+  }
+
+  .chat-container {
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
   }
 }
 </style>

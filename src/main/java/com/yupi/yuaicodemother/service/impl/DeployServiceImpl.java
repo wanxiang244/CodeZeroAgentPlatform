@@ -9,6 +9,7 @@ import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.DeployService;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -28,8 +29,8 @@ public class DeployServiceImpl implements DeployService {
     @Resource
     private AppService appService;
 
-    // 部署域名
-    private static final String DEPLOY_DOMAIN = "http://localhost";
+    @Value("${app.deploy.domain:http://localhost}")
+    private String deployDomain;
 
     // 随机字符串字符集（大小写字母+数字）
     private static final String BASE_CHAR = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -121,7 +122,7 @@ public class DeployServiceImpl implements DeployService {
         }
 
         // 返回部署URL
-        return DEPLOY_DOMAIN + "/" + deployKey;
+        return StrUtil.removeSuffix(deployDomain, "/") + "/" + deployKey;
     }
 
     /**
