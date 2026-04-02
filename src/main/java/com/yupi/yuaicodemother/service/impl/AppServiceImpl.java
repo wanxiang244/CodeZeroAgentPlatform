@@ -13,17 +13,23 @@ import com.yupi.yuaicodemother.exception.ThrowUtils;
 import com.yupi.yuaicodemother.model.dto.AdminAppUpdateRequest;
 import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
+import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.mapper.AppMapper;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
+import com.yupi.yuaicodemother.model.vo.UserVO;
 import com.yupi.yuaicodemother.service.AppService;
+import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -38,6 +44,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     private AiCodeGeneratorFacade aiCodeGeneratorFacade;
 
+    @Resource
+    private UserService userService;
+
     @Override
     public AppVO getAppVO(App app) {
         if (app == null) {
@@ -45,6 +54,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         }
         AppVO appVO = new AppVO();
         BeanUtil.copyProperties(app, appVO);
+        if (app.getUserId() != null) {
+            User user = userService.getById(app.getUserId());
+            appVO.setUser(userService.getUserVO(user));
+        }
         return appVO;
     }
 
@@ -53,9 +66,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (CollUtil.isEmpty(appList)) {
             return new ArrayList<>();
         }
-        return appList.stream()
-                .map(this::getAppVO)
+        List<AppVO> appVOList = appList.stream()
+                .map(app -> {
+                    AppVO appVO = new AppVO();
+                    BeanUtil.copyProperties(app, appVO);
+                    return appVO;
+                })
                 .collect(Collectors.toList());
+        fillUserInfo(appVOList);
+        return appVOList;
+    }
+
+    /**
+     * 为应用列表批量填充创建者信息，避免逐条查询用户。
+     *
+     * @param appVOList 应用视图列表
+     */
+    private void fillUserInfo(List<AppVO> appVOList) {
+        Set<Long> userIdSet = appVOList.stream()
+                .map(AppVO::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (userIdSet.isEmpty()) {
+            return;
+        }
+        Map<Long, UserVO> userVOMap = userService.listByIds(userIdSet).stream()
+                .collect(Collectors.toMap(User::getId, userService::getUserVO));
+        appVOList.forEach(appVO -> appVO.setUser(userVOMap.getOrDefault(appVO.getUserId(), null)));
     }
 
     @Override

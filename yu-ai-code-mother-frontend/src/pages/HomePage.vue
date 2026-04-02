@@ -52,7 +52,18 @@
                   <span>无封面</span>
                 </div>
               </template>
-              <a-card-meta :title="app.appName" />
+              <div class="app-card-info">
+                <a-avatar
+                  class="app-card-avatar"
+                  :src="app.user?.userAvatar"
+                >
+                  {{ getUserInitial(app.user?.userName) }}
+                </a-avatar>
+                <div class="app-card-text">
+                  <div class="app-card-title">{{ app.appName || '未命名应用' }}</div>
+                  <div class="app-card-user">{{ app.user?.userName || '未知用户' }}</div>
+                </div>
+              </div>
               <template #actions>
                 <a-space>
                   <EditOutlined @click.stop="goToAppEdit(app.id)" />
@@ -110,7 +121,18 @@
                   <span>无封面</span>
                 </div>
               </template>
-              <a-card-meta :title="app.appName" />
+              <div class="app-card-info">
+                <a-avatar
+                  class="app-card-avatar"
+                  :src="app.user?.userAvatar"
+                >
+                  {{ getUserInitial(app.user?.userName) }}
+                </a-avatar>
+                <div class="app-card-text">
+                  <div class="app-card-title">{{ app.appName || '未命名应用' }}</div>
+                  <div class="app-card-user">{{ app.user?.userName || '未知用户' }}</div>
+                </div>
+              </div>
             </a-card>
           </a-col>
         </a-row>
@@ -158,6 +180,10 @@ const featuredPagination = ref({
   pageSize: 20,
   total: 0
 })
+
+const getUserInitial = (userName?: string) => {
+  return userName?.trim()?.charAt(0)?.toUpperCase() || 'U'
+}
 
 // 创建应用
 const handleCreateApp = async () => {
@@ -347,9 +373,41 @@ onMounted(() => {
   object-fit: cover;
 }
 
-.app-card .ant-card-meta-title {
+.app-card-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.app-card-avatar {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #1f2937, #4b5563);
+  color: #fff;
+}
+
+.app-card-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.app-card-title {
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.app-card-user {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-card .ant-card-actions {
