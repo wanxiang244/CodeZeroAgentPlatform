@@ -323,6 +323,7 @@ const startStreamGeneration = async (prompt: string) => {
   const currentAppId = appId.value
   if (!currentAppId) return
 
+  const assistantMessageId = `assistant-${Date.now()}`
   const userMessageItem: MessageItem = {
     id: `user-${Date.now()}`,
     role: 'user',
@@ -330,7 +331,7 @@ const startStreamGeneration = async (prompt: string) => {
     messageType: 'user'
   }
   const assistantMessageItem: MessageItem = {
-    id: `assistant-${Date.now()}`,
+    id: assistantMessageId,
     role: 'assistant',
     content: '',
     messageType: 'ai'
@@ -360,7 +361,10 @@ const startStreamGeneration = async (prompt: string) => {
         return
       }
 
-      assistantMessageItem.content += data
+      const targetMessage = messages.value.find(message => message.id === assistantMessageId)
+      if (targetMessage) {
+        targetMessage.content += data
+      }
       scrollToBottom()
     }
 
@@ -368,9 +372,10 @@ const startStreamGeneration = async (prompt: string) => {
       console.error('SSE 连接错误:', error)
       eventSource.close()
       loading.value = false
-      if (!assistantMessageItem.content) {
-        assistantMessageItem.content = '代码生成失败，请稍后重试'
-        assistantMessageItem.messageType = 'error'
+      const targetMessage = messages.value.find(message => message.id === assistantMessageId)
+      if (targetMessage && !targetMessage.content) {
+        targetMessage.content = '代码生成失败，请稍后重试'
+        targetMessage.messageType = 'error'
       }
       message.error('代码生成失败')
     }
