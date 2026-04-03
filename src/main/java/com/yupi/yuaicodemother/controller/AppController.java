@@ -263,7 +263,7 @@ public class AppController {
                 appService.getQueryWrapper(appQueryRequest));
         // 数据脱敏
         Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
-        List<AppVO> appVOList = appService.getAppVOList(appPage.getRecords());
+        List<AppVO> appVOList = appService. getAppVOList(appPage.getRecords());
         appVOPage.setRecords(appVOList);
         return ResultUtils.success(appVOPage);
     }
