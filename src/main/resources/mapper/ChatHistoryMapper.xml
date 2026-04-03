@@ -4,4 +4,34 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.yupi.yuaicodemother.mapper.ChatHistoryMapper">
 
+    <select id="selectAppHistoryPage" resultType="com.yupi.yuaicodemother.model.entity.ChatHistory">
+        select id,
+               message,
+               messageType,
+               appId,
+               userId,
+               createTime,
+               updateTime,
+               isDelete
+        from chat_history
+        where isDelete = 0
+          and appId = #{appId}
+        <if test="cursorCreateTime != null and cursorId != null">
+            and (
+                createTime &lt; #{cursorCreateTime}
+                or (createTime = #{cursorCreateTime} and id &lt; #{cursorId})
+            )
+        </if>
+        order by createTime desc, id desc
+        limit #{limit}
+    </select>
+
+    <update id="logicalDeleteByAppId">
+        update chat_history
+        set isDelete = 1,
+            updateTime = now()
+        where appId = #{appId}
+          and isDelete = 0
+    </update>
+
 </mapper>

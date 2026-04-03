@@ -16,13 +16,16 @@ import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.mapper.AppMapper;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
+import com.yupi.yuaicodemother.model.enums.MessageTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.model.vo.UserVO;
 import com.yupi.yuaicodemother.service.AppService;
+import com.yupi.yuaicodemother.service.ChatHistoryService;
 import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
@@ -46,6 +49,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private ChatHistoryService chatHistoryService;
 
     @Override
     public AppVO getAppVO(App app) {
@@ -118,6 +124,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean deleteApp(Long id, Long userId, String userRole) {
         // 参数校验
         if (id == null || userId == null) {
@@ -137,8 +144,11 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限删除该应用");
         }
 
-        // 执行删除（逻辑删除）
-        return this.removeById(id);
+        // 执行删除（逻辑删除）并级联删除对话历史
+        boolean result = this.removeById(id);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除应用失败");
+        chatHistoryService.removeByAppId(id);
+        return true;
     }
 
     @Override
@@ -192,6 +202,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean adminDeleteApp(Long id) {
         // 参数校验
         if (id == null) {
@@ -204,8 +215,11 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用不存在");
         }
 
-        // 执行删除（逻辑删除）
-        return this.removeById(id);
+        // 执行删除（逻辑删除）并级联删除对话历史
+        boolean result = this.removeById(id);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "删除应用失败");
+        chatHistoryService.removeByAppId(id);
+        return true;
     }
 
     @Override
@@ -237,7 +251,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     }
 
     @Override
-    public Flux<String> chatToGenCode(Long appId, Long userId) {
+    public Flux<String> chatToGenCode(Long appId, Long userId, String userMessage) {
         // 参数校验
         if (appId == null || appId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用ID无效");
@@ -257,11 +271,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限操作该应用");
         }
 
-        // 获取初始提示词
-        String initPrompt = app.getInitPrompt();
-        if (StrUtil.isBlank(initPrompt)) {
-            throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用初始化提示词为空");
+        String actualUserMessage = StrUtil.blankToDefault(StrUtil.trim(userMessage), app.getInitPrompt());
+        if (StrUtil.isBlank(actualUserMessage)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户消息不能为空");
         }
+
+        chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.USER, actualUserMessage);
 
         // 获取代码生成类型
         String codeGenTypeValue = app.getCodeGenType();
@@ -270,8 +285,24 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             codeGenType = CodeGenTypeEnum.MULTI_FILE; // 默认多文件生成
         }
 
+        StringBuilder aiReplyBuilder = new StringBuilder();
+
         // 调用 AI 代码生成门面，流式生成代码
-        return aiCodeGeneratorFacade.generateAndSaveCodeStream(initPrompt, codeGenType, appId);
+        return aiCodeGeneratorFacade.generateAndSaveCodeStream(actualUserMessage, codeGenType, appId)
+                .doOnNext(chunk -> {
+                    if (!"[DONE]".equals(chunk)) {
+                        aiReplyBuilder.append(chunk);
+                    }
+                })
+                .doOnComplete(() -> {
+                    if (aiReplyBuilder.length() > 0) {
+                        chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.AI, aiReplyBuilder.toString());
+                    }
+                })
+                .doOnError(error -> {
+                    String errorMessage = buildChatErrorMessage(aiReplyBuilder.toString(), error);
+                    chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.ERROR, errorMessage);
+                });
     }
 
     @Override
@@ -282,6 +313,24 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .eq("deployKey", deployKey);
         return this.exists(queryWrapper);
+    }
+
+    /**
+     * 构造对话失败记录
+     *
+     * @param partialReply 已生成的部分内容
+     * @param error        异常信息
+     * @return 错误消息
+     */
+    private String buildChatErrorMessage(String partialReply, Throwable error) {
+        StringBuilder errorMessage = new StringBuilder("AI 回复失败");
+        if (error != null && StrUtil.isNotBlank(error.getMessage())) {
+            errorMessage.append("：").append(error.getMessage());
+        }
+        if (StrUtil.isNotBlank(partialReply)) {
+            errorMessage.append("\n\n已生成的部分内容：\n").append(partialReply);
+        }
+        return errorMessage.toString();
     }
 
 

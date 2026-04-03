@@ -64,6 +64,17 @@
                   <div class="app-card-user">{{ app.user?.userName || '未知用户' }}</div>
                 </div>
               </div>
+              <div class="app-card-buttons">
+                <a-button type="primary" ghost @click.stop="goToAppChat(app.id)">
+                  查看对话
+                </a-button>
+                <a-button
+                  v-if="app.deployKey"
+                  @click.stop="openAppWork(app)"
+                >
+                  查看作品
+                </a-button>
+              </div>
               <template #actions>
                 <a-space>
                   <EditOutlined @click.stop="goToAppEdit(app.id)" />
@@ -133,6 +144,17 @@
                   <div class="app-card-user">{{ app.user?.userName || '未知用户' }}</div>
                 </div>
               </div>
+              <div class="app-card-buttons">
+                <a-button type="primary" ghost @click.stop="goToAppChat(app.id)">
+                  查看对话
+                </a-button>
+                <a-button
+                  v-if="app.deployKey"
+                  @click.stop="openAppWork(app)"
+                >
+                  查看作品
+                </a-button>
+              </div>
             </a-card>
           </a-col>
         </a-row>
@@ -158,6 +180,7 @@ import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import * as appController from '@/api/appController'
 import type { API } from '@/api/typings'
+import { APP_DEPLOY_BASE_URL } from '@/config/env'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -258,7 +281,12 @@ const handleDeleteMyApp = async (app: API.AppVO) => {
 
 // 页面跳转
 const goToAppChat = (appId: string | number) => {
-  router.push(`/app/chat/${appId}`)
+  router.push({
+    path: `/app/chat/${appId}`,
+    query: {
+      view: '1'
+    }
+  })
 }
 
 const goToAppEdit = (appId: string | number | undefined) => {
@@ -267,6 +295,14 @@ const goToAppEdit = (appId: string | number | undefined) => {
     return
   }
   router.push(`/app/edit/${appId}`)
+}
+
+const openAppWork = (app: API.AppVO) => {
+  if (!app.deployKey) {
+    message.info('该应用还没有可查看的作品')
+    return
+  }
+  window.open(`${APP_DEPLOY_BASE_URL}/${app.deployKey}`, '_blank', 'noopener,noreferrer')
 }
 
 // 分页变化处理
@@ -408,6 +444,16 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.app-card-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+}
+
+.app-card-buttons .ant-btn {
+  flex: 1;
 }
 
 .app-card .ant-card-actions {

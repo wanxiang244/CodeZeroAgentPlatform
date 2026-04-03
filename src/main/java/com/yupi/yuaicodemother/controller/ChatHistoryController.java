@@ -1,21 +1,28 @@
 package com.yupi.yuaicodemother.controller;
 
 import com.mybatisflex.core.paginate.Page;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import com.yupi.yuaicodemother.annotation.AuthCheck;
+import com.yupi.yuaicodemother.common.BaseResponse;
+import com.yupi.yuaicodemother.common.ResultUtils;
+import com.yupi.yuaicodemother.constant.UserConstant;
+import com.yupi.yuaicodemother.exception.ErrorCode;
+import com.yupi.yuaicodemother.exception.ThrowUtils;
+import com.yupi.yuaicodemother.model.dto.ChatHistoryAdminQueryRequest;
+import com.yupi.yuaicodemother.model.dto.ChatHistoryQueryRequest;
+import com.yupi.yuaicodemother.model.entity.User;
+import com.yupi.yuaicodemother.model.vo.ChatHistoryPageVO;
+import com.yupi.yuaicodemother.model.vo.ChatHistoryVO;
+import com.yupi.yuaicodemother.service.ChatHistoryService;
+import com.yupi.yuaicodemother.service.UserService;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.yupi.yuaicodemother.model.entity.ChatHistory;
-import com.yupi.yuaicodemother.service.ChatHistoryService;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
 
 /**
- *  控制层。
+ * 对话历史 控制层。
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  */
@@ -23,72 +30,38 @@ import java.util.List;
 @RequestMapping("/chatHistory")
 public class ChatHistoryController {
 
-    @Autowired
+    @Resource
     private ChatHistoryService chatHistoryService;
 
+    @Resource
+    private UserService userService;
+
     /**
-     * 保存。
+     * 分页查询应用对话历史（仅应用创建者和管理员可见）
      *
-     * @param chatHistory 
-     * @return {@code true} 保存成功，{@code false} 保存失败
+     * @param chatHistoryQueryRequest 查询条件
+     * @param request                 HTTP 请求
+     * @return 对话历史游标分页结果
      */
-    @PostMapping("save")
-    public boolean save(@RequestBody ChatHistory chatHistory) {
-        return chatHistoryService.save(chatHistory);
+    @PostMapping("/app/list/page")
+    public BaseResponse<ChatHistoryPageVO> listAppChatHistoryByPage(@RequestBody ChatHistoryQueryRequest chatHistoryQueryRequest,
+                                                                    HttpServletRequest request) {
+        ThrowUtils.throwIf(chatHistoryQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(chatHistoryService.listAppChatHistoryByPage(chatHistoryQueryRequest, loginUser));
     }
 
     /**
-     * 根据主键删除。
+     * 管理员分页查询所有对话历史
      *
-     * @param id 主键
-     * @return {@code true} 删除成功，{@code false} 删除失败
+     * @param chatHistoryAdminQueryRequest 查询条件
+     * @return 对话历史分页结果
      */
-    @DeleteMapping("remove/{id}")
-    public boolean remove(@PathVariable Long id) {
-        return chatHistoryService.removeById(id);
+    @PostMapping("/admin/list/page/vo")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Page<ChatHistoryVO>> listChatHistoryByPageForAdmin(
+            @RequestBody ChatHistoryAdminQueryRequest chatHistoryAdminQueryRequest) {
+        ThrowUtils.throwIf(chatHistoryAdminQueryRequest == null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(chatHistoryService.listChatHistoryByPageForAdmin(chatHistoryAdminQueryRequest));
     }
-
-    /**
-     * 根据主键更新。
-     *
-     * @param chatHistory 
-     * @return {@code true} 更新成功，{@code false} 更新失败
-     */
-    @PutMapping("update")
-    public boolean update(@RequestBody ChatHistory chatHistory) {
-        return chatHistoryService.updateById(chatHistory);
-    }
-
-    /**
-     * 查询所有。
-     *
-     * @return 所有数据
-     */
-    @GetMapping("list")
-    public List<ChatHistory> list() {
-        return chatHistoryService.list();
-    }
-
-    /**
-     * 根据主键获取。
-     *
-     * @param id 主键
-     * @return 详情
-     */
-    @GetMapping("getInfo/{id}")
-    public ChatHistory getInfo(@PathVariable Long id) {
-        return chatHistoryService.getById(id);
-    }
-
-    /**
-     * 分页查询。
-     *
-     * @param page 分页对象
-     * @return 分页对象
-     */
-    @GetMapping("page")
-    public Page<ChatHistory> page(Page<ChatHistory> page) {
-        return chatHistoryService.page(page);
-    }
-
 }

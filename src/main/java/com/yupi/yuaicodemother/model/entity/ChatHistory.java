@@ -16,7 +16,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- *  实体类。
+ * 对话历史 实体类。
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  */
@@ -39,10 +39,11 @@ public class ChatHistory implements Serializable {
     /**
      * 消息
      */
+    @Column("message")
     private String message;
 
     /**
-     * user/ai
+     * 消息类型：user/ai/error
      */
     @Column("messageType")
     private String messageType;

@@ -167,12 +167,7 @@ public class AppController {
         }
 
         // 获取当前登录用户
-        User loginUser = userService.getLoginUser(request);
-
-        // 权限校验：只能查看自己的应用
-        if (!app.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限查看该应用");
-        }
+        userService.getLoginUser(request);
 
         // 返回应用详情
         return ResultUtils.success(appService.getAppVO(app));
@@ -332,7 +327,9 @@ public class AppController {
      * @return 流式代码生成响应
      */
     @GetMapping(value = "/chat-to-gen-code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> chatToGenCode(@RequestParam Long appId, HttpServletRequest request) {
+    public Flux<String> chatToGenCode(@RequestParam Long appId,
+                                      @RequestParam(required = false) String userMessage,
+                                      HttpServletRequest request) {
         // 权限校验：确保用户已登录
         User loginUser = userService.getLoginUser(request);
 
@@ -348,6 +345,6 @@ public class AppController {
         }
 
         // 调用服务层流式生成代码
-        return appService.chatToGenCode(appId, loginUser.getId());
+        return appService.chatToGenCode(appId, loginUser.getId(), userMessage);
     }
 }

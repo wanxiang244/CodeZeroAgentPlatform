@@ -4,14 +4,19 @@
       <!-- 顶部栏 -->
       <div class="top-bar">
         <div class="app-name">{{ app?.appName || '应用对话' }}</div>
-        <a-button
-          type="primary"
-          @click="handleDeploy"
-          :loading="deployLoading"
-          v-if="app?.id"
-        >
-          部署应用
-        </a-button>
+        <div class="top-bar-actions">
+          <a-button @click="showAppDetail = true" v-if="app?.id">
+            应用详情
+          </a-button>
+          <a-button
+            type="primary"
+            @click="handleDeploy"
+            :loading="deployLoading"
+            v-if="app?.id && isOwner"
+          >
+            部署应用
+          </a-button>
+        </div>
       </div>
 
       <!-- 核心内容区域 -->
@@ -46,17 +51,22 @@
 
           <!-- 用户输入框 -->
           <div class="input-container">
-            <a-textarea
-              v-model:value="userInput"
-              placeholder="请输入您的需求..."
-              :rows="3"
-              @pressEnter="handleSend"
-              :disabled="loading"
-            />
+            <a-tooltip :title="isReadonly ? '无法在别人的作品下对话哦~' : null">
+              <div>
+                <a-textarea
+                  v-model:value="userInput"
+                  :placeholder="isReadonly ? '无法在别人的作品下对话哦~' : '请输入您的需求...'"
+                  :rows="3"
+                  @pressEnter="handleSend"
+                  :disabled="loading || isReadonly"
+                />
+              </div>
+            </a-tooltip>
             <a-button
               type="primary"
               @click="handleSend"
               :loading="loading"
+              :disabled="isReadonly"
               style="margin-top: 8px;"
             >
               发送
@@ -79,14 +89,53 @@
       </div>
     </a-layout-content>
   </a-layout>
+  <a-modal
+    v-model:open="showAppDetail"
+    title="应用详情"
+    :footer="null"
+    width="440px"
+  >
+    <div class="app-detail-modal" v-if="app">
+      <div class="detail-section">
+        <div class="detail-section-title">应用基础信息</div>
+        <div class="detail-row">
+          <span class="detail-label">创建者</span>
+          <div class="creator-info">
+            <a-avatar :src="app.user?.userAvatar">
+              {{ getUserInitial(app.user?.userName) }}
+            </a-avatar>
+            <span class="creator-name">{{ app.user?.userName || '未知用户' }}</span>
+          </div>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">创建时间</span>
+          <span class="detail-value">{{ formatTime(app.createTime) }}</span>
+        </div>
+      </div>
+
+      <div class="detail-section" v-if="canManageApp">
+        <div class="detail-section-title">操作栏</div>
+        <div class="detail-actions">
+          <a-button type="primary" ghost @click="handleEditApp">
+            修改
+          </a-button>
+          <a-button danger @click="handleDeleteApp">
+            删除
+          </a-button>
+        </div>
+      </div>
+    </div>
+  </a-modal>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
-import { useRoute } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { getAppVoById, deployApp } from '@/api/appController'
+import { ref, onMounted, nextTick, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { message, Modal } from 'ant-design-vue'
+import dayjs from 'dayjs'
+import { getAppVoById, deployApp, deleteApp, adminDeleteApp } from '@/api/appController'
 import { API_BASE_URL, APP_PREVIEW_BASE_URL } from '@/config/env'
+import { useLoginUserStore } from '@/stores/loginUser'
 import { renderMarkdown } from '@/utils/markdown'
 import 'highlight.js/styles/github-dark.css'
 
@@ -96,6 +145,8 @@ interface Message {
 }
 
 const route = useRoute()
+const router = useRouter()
+const loginUserStore = useLoginUserStore()
 const routeAppId = route.params.id
 const appId = ref<string | null>(
   typeof routeAppId === 'string' && routeAppId ? routeAppId : null
@@ -107,6 +158,20 @@ const loading = ref(false)
 const deployLoading = ref(false)
 const previewUrl = ref('')
 const messagesContainer = ref<HTMLDivElement | null>(null)
+const showAppDetail = ref(false)
+const isViewMode = computed(() => route.query.view === '1')
+const isOwner = computed(() => !!app.value?.userId && app.value.userId === loginUserStore.loginUser.id)
+const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
+const isReadonly = computed(() => !!app.value && !isOwner.value)
+const canManageApp = computed(() => isOwner.value || isAdmin.value)
+
+const getUserInitial = (userName?: string) => {
+  return userName?.trim()?.charAt(0)?.toUpperCase() || 'U'
+}
+
+const formatTime = (time?: string) => {
+  return time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : '-'
+}
 
 // 获取应用详情
 const fetchApp = async () => {
@@ -126,6 +191,7 @@ const fetchApp = async () => {
 
 // 初始化对话 - 发送初始提示词
 const initConversation = async () => {
+  if (isViewMode.value || isReadonly.value) return
   if (!app.value?.initPrompt) return
 
   // 添加用户消息（初始提示词）
@@ -206,7 +272,7 @@ const startStreamGeneration = async (prompt: string) => {
 
 // 发送消息
 const handleSend = async () => {
-  if (!userInput.value.trim() || loading.value) return
+  if (!userInput.value.trim() || loading.value || isReadonly.value) return
 
   const userMessage = userInput.value.trim()
   messages.value.push({
@@ -241,6 +307,42 @@ const handleDeploy = async () => {
   }
 }
 
+const handleEditApp = () => {
+  if (!appId.value) return
+  showAppDetail.value = false
+  router.push(`/app/edit/${appId.value}`)
+}
+
+const handleDeleteApp = () => {
+  if (!app.value?.id || !canManageApp.value) return
+  Modal.confirm({
+    title: '确认删除该应用？',
+    content: '删除后将无法恢复。',
+    okText: '删除',
+    okButtonProps: {
+      danger: true
+    },
+    cancelText: '取消',
+    async onOk() {
+      try {
+        if (!app.value?.id) return
+        if (isAdmin.value && !isOwner.value) {
+          await adminDeleteApp({ id: app.value.id })
+        } else {
+          await deleteApp({ id: app.value.id })
+        }
+        message.success('删除成功')
+        showAppDetail.value = false
+        router.push('/')
+      } catch (error) {
+        console.error('删除应用失败:', error)
+        message.error('删除失败')
+        throw error
+      }
+    }
+  })
+}
+
 // 滚动到底部
 const scrollToBottom = () => {
   nextTick(() => {
@@ -251,6 +353,11 @@ const scrollToBottom = () => {
 }
 
 onMounted(async () => {
+  try {
+    await loginUserStore.fetchLoginUser()
+  } catch (error) {
+    console.error('获取登录用户失败:', error)
+  }
   await fetchApp()
   await initConversation()
 })
@@ -275,6 +382,12 @@ onMounted(async () => {
   padding: 0 var(--spacing-md);
   background: var(--color-bg-primary);
   border-bottom: 1px solid var(--color-border);
+}
+
+.top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .app-name {
@@ -450,6 +563,59 @@ onMounted(async () => {
   flex: 1;
   width: 100%;
   border: none;
+}
+
+.app-detail-modal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.detail-section-title {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+}
+
+.detail-label {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: var(--color-text-primary);
+}
+
+.creator-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.creator-name {
+  color: var(--color-text-primary);
+}
+
+.detail-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+.detail-actions .ant-btn {
+  flex: 1;
 }
 
 @media (max-width: 1200px) {
