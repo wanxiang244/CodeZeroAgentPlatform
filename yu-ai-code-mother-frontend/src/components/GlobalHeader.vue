@@ -137,6 +137,11 @@ const originItems = [
     title: '用户管理',
   },
   {
+    key: '/admin/chatHistoryManage',
+    label: '对话管理',
+    title: '对话管理',
+  },
+  {
     key: 'others',
     label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
     title: '编程导航',
@@ -189,7 +194,7 @@ const doLogout = async () => {
     message.success('退出登录成功')
     await router.push('/user/login')
   } else {
-    message.error('退出登录失败，' + res.data.msg)
+    message.error('退出登录失败，' + res.data.message)
   }
 }
 </script>

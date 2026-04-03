@@ -179,7 +179,6 @@ import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import * as appController from '@/api/appController'
-import type { API } from '@/api/typings'
 import { APP_DEPLOY_BASE_URL } from '@/config/env'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
@@ -280,13 +279,12 @@ const handleDeleteMyApp = async (app: API.AppVO) => {
 }
 
 // 页面跳转
-const goToAppChat = (appId: string | number) => {
-  router.push({
-    path: `/app/chat/${appId}`,
-    query: {
-      view: '1'
-    }
-  })
+const goToAppChat = (appId: string | number | undefined) => {
+  if (appId === undefined || appId === null) {
+    message.error('应用 id 无效')
+    return
+  }
+  router.push(`/app/chat/${appId}`)
 }
 
 const goToAppEdit = (appId: string | number | undefined) => {
