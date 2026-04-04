@@ -5,12 +5,15 @@ import cn.hutool.setting.yaml.YamlUtil;
 import com.mybatisflex.codegen.Generator;
 import com.mybatisflex.codegen.config.GlobalConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import dev.langchain4j.community.store.embedding.redis.spring.RedisEmbeddingStoreAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import java.util.Map;
 
 /**
  * MyBatis Flex 代码生成器
  */
+@SpringBootApplication(exclude = {RedisEmbeddingStoreAutoConfiguration.class})
 public class MyBatisCodeGenerator {
 
     // 要生成的表名

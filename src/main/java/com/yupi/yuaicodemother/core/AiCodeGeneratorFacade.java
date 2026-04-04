@@ -1,6 +1,7 @@
 package com.yupi.yuaicodemother.core;
 
 import com.yupi.yuaicodemother.ai.AiCodeGeneratorService;
+import com.yupi.yuaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.yupi.yuaicodemother.ai.model.HtmlCodeResult;
 import com.yupi.yuaicodemother.ai.model.MultiFileCodeResult;
 import com.yupi.yuaicodemother.core.parser.CodeParserExecutor;
@@ -23,7 +24,7 @@ import java.io.File;
 public class AiCodeGeneratorFacade {
 
     @Resource
-    private AiCodeGeneratorService aiCodeGeneratorService;
+    private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -50,11 +51,11 @@ public class AiCodeGeneratorFacade {
         }
         return switch (codeGenTypeEnum) {
             case HTML -> {
-                HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
+                HtmlCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId).generateHtmlCode(userMessage);
                 yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
-                MultiFileCodeResult result = aiCodeGeneratorService.generateMultiFileCode(userMessage);
+                MultiFileCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId).generateMultiFileCode(userMessage);
                 yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> {
@@ -87,6 +88,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
