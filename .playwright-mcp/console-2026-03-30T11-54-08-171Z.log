@@ -1,0 +1,22 @@
+[     262ms] [WARNING] [Vue warn]: Invalid prop: type check failed for prop "labelCol". Expected Object, got String with value "{ span: 4 }". 
+  at <AForm model= {appName: , cover: , priority: 0, initPrompt: } rules= {appName: Array(1), initPrompt: Array(1)} ref="formRef"  ... > 
+  at <ACard title="编辑应用" style= {margin: 20px} > 
+  at <AppEditPage id="1" onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouterView > 
+  at <Anonymous hasSider=undefined prefixCls="ant-layout-content" tagName="main"  ... > 
+  at <ALayoutContent class="main-content" > 
+  at <Anonymous hasSider=undefined prefixCls="ant-layout" tagName="section"  ... > 
+  at <ALayout class="basic-layout" > 
+  at <BasicLayout > 
+  at <App> @ http://localhost:5173/node_modules/.vite/deps/chunk-VZXQDS5F.js?v=887613c6:2124
+[     263ms] [WARNING] [Vue warn]: Invalid prop: type check failed for prop "wrapperCol". Expected Object, got String with value "{ span: 16 }". 
+  at <AForm model= {appName: , cover: , priority: 0, initPrompt: } rules= {appName: Array(1), initPrompt: Array(1)} ref="formRef"  ... > 
+  at <ACard title="编辑应用" style= {margin: 20px} > 
+  at <AppEditPage id="1" onVnodeUnmounted=fn<onVnodeUnmounted> ref=Ref< undefined > > 
+  at <RouterView > 
+  at <Anonymous hasSider=undefined prefixCls="ant-layout-content" tagName="main"  ... > 
+  at <ALayoutContent class="main-content" > 
+  at <Anonymous hasSider=undefined prefixCls="ant-layout" tagName="section"  ... > 
+  at <ALayout class="basic-layout" > 
+  at <BasicLayout > 
+  at <App> @ http://localhost:5173/node_modules/.vite/deps/chunk-VZXQDS5F.js?v=887613c6:2124

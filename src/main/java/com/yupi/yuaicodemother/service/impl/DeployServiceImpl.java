@@ -3,13 +3,13 @@ package com.yupi.yuaicodemother.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.yupi.yuaicodemother.constant.AppConstant;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.DeployService;
 import jakarta.annotation.Resource;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -28,9 +28,6 @@ public class DeployServiceImpl implements DeployService {
 
     @Resource
     private AppService appService;
-
-    @Value("${app.deploy.domain:http://localhost}")
-    private String deployDomain;
 
     // 随机字符串字符集（大小写字母+数字）
     private static final String BASE_CHAR = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -72,14 +69,14 @@ public class DeployServiceImpl implements DeployService {
         }
 
         // 源目录路径
-        String sourceDirPath = System.getProperty("user.dir") + "/tmp/code_output/" + codeGenType + "_" + appId;
+        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/" + codeGenType + "_" + appId;
         // 检查源目录是否存在
         if (!FileUtil.exist(sourceDirPath)) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件不存在，请先生成代码");
         }
 
         // 目标目录路径
-        String targetDirPath = System.getProperty("user.dir") + "/tmp/code_deploy/" + deployKey;
+        String targetDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + "/" + deployKey;
 
         try {
             // 创建目标目录（如果不存在）
@@ -122,7 +119,7 @@ public class DeployServiceImpl implements DeployService {
         }
 
         // 返回部署URL
-        return StrUtil.removeSuffix(deployDomain, "/") + "/" + deployKey;
+        return StrUtil.removeSuffix(AppConstant.APP_DEPLOY_DOMAIN, "/") + "/" + deployKey;
     }
 
     /**

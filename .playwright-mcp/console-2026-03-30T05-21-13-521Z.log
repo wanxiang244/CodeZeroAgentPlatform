@@ -1,0 +1,2 @@
+[    4770ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://www.stylekit.top/_vercel/insights/script.js:0
+[    4770ms] [ERROR] Refused to execute script from 'https://www.stylekit.top/_vercel/insights/script.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled. @ https://www.stylekit.top/zh/styles/minimalist-flat/showcase:0
