@@ -29,6 +29,7 @@
         :data-source="chatHistoryList"
         :pagination="pagination"
         :loading="loading"
+        :scroll="{ x: 1500 }"
         row-key="id"
         table-layout="fixed"
         @change="handleTableChange"
@@ -40,9 +41,11 @@
             </a-tag>
           </template>
           <template v-else-if="column.key === 'message'">
-            <div class="message-cell" :title="record.message">
-              {{ record.message || '-' }}
-            </div>
+            <a-tooltip :title="record.message || '-'">
+              <div class="message-cell">
+                {{ record.message || '-' }}
+              </div>
+            </a-tooltip>
           </template>
           <template v-else-if="column.key === 'user'">
             <div class="user-cell">
@@ -93,13 +96,13 @@ const pagination = reactive({
 const columns = [
   { title: 'ID', dataIndex: 'id', key: 'id', width: 120 },
   { title: '应用ID', dataIndex: 'appId', key: 'appId', width: 120 },
-  { title: '应用名称', dataIndex: 'appName', key: 'appName', width: 160 },
+  { title: '应用名称', dataIndex: 'appName', key: 'appName', width: 180 },
   { title: '发送用户', key: 'user', width: 180 },
   { title: '消息类型', key: 'messageType', width: 110 },
-  { title: '消息内容', key: 'message' },
+  { title: '消息内容', dataIndex: 'message', key: 'message', width: 320 },
   { title: '创建时间', key: 'createTime', width: 180 },
   { title: '更新时间', key: 'updateTime', width: 180 },
-  { title: '操作', key: 'action', width: 110 }
+  { title: '操作', key: 'action', width: 120 }
 ]
 
 const getUserInitial = (userName?: string) => {
@@ -214,9 +217,13 @@ onMounted(() => {
 }
 
 .message-cell {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.6;
+  max-height: 4.8em;
+  word-break: break-word;
 }
 
 .user-cell {
