@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -172,6 +173,16 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         fillUserInfo(chatHistoryVOList);
         fillAppInfo(chatHistoryVOList);
         return chatHistoryVOList;
+    }
+
+    @Override
+    public List<ChatHistory> listAppChatHistoryForMemory(Long appId) {
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 id 非法");
+        List<ChatHistory> chatHistoryList = mapper.selectAppHistoryForMemory(appId);
+        if (CollUtil.isEmpty(chatHistoryList)) {
+            return Collections.emptyList();
+        }
+        return chatHistoryList;
     }
 
     /**

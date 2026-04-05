@@ -79,4 +79,13 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return 视图对象列表
      */
     List<ChatHistoryVO> getChatHistoryVOList(List<ChatHistory> chatHistoryList);
+
+    /**
+     * 查询应用全部对话历史，供记忆初始化使用
+     * 返回结果按时间倒序排列
+     *
+     * @param appId 应用 id
+     * @return 对话历史列表
+     */
+    List<ChatHistory> listAppChatHistoryForMemory(Long appId);
 }

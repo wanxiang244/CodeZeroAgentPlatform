@@ -34,4 +34,19 @@
           and isDelete = 0
     </update>
 
+    <select id="selectAppHistoryForMemory" resultType="com.yupi.yuaicodemother.model.entity.ChatHistory">
+        select id,
+               message,
+               messageType,
+               appId,
+               userId,
+               createTime,
+               updateTime,
+               isDelete
+        from chat_history
+        where isDelete = 0
+          and appId = #{appId}
+        order by createTime desc, id desc
+    </select>
+
 </mapper>

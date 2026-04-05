@@ -35,4 +35,12 @@ public interface ChatHistoryMapper extends BaseMapper<ChatHistory> {
      * @return 影响行数
      */
     int logicalDeleteByAppId(@Param("appId") Long appId);
+
+    /**
+     * 查询应用全部对话历史，按时间倒序
+     *
+     * @param appId 应用 id
+     * @return 对话历史列表
+     */
+    List<ChatHistory> selectAppHistoryForMemory(@Param("appId") Long appId);
 }
