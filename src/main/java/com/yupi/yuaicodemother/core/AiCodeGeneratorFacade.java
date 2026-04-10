@@ -4,13 +4,21 @@ import com.yupi.yuaicodemother.ai.AiCodeGeneratorService;
 import com.yupi.yuaicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.yupi.yuaicodemother.ai.model.HtmlCodeResult;
 import com.yupi.yuaicodemother.ai.model.MultiFileCodeResult;
+import com.yupi.yuaicodemother.ai.model.message.AiResponseMessage;
+import com.yupi.yuaicodemother.ai.model.message.ToolExecutedMessage;
+import com.yupi.yuaicodemother.ai.model.message.ToolRequestMessage;
 import com.yupi.yuaicodemother.core.parser.CodeParserExecutor;
 import com.yupi.yuaicodemother.core.saver.CodeFileSaverExecutor;
+import com.yupi.yuaicodemother.core.stream.StreamHandlerExecutor;
+import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 
+import cn.hutool.json.JSONUtil;
+import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,6 +35,9 @@ public class AiCodeGeneratorFacade {
 
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -53,11 +64,13 @@ public class AiCodeGeneratorFacade {
         }
         return switch (codeGenTypeEnum) {
             case HTML -> {
-                HtmlCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId).generateHtmlCode(userMessage);
+                HtmlCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId)
+                        .generateHtmlCode(userMessage);
                 yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
-                MultiFileCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId).generateMultiFileCode(userMessage);
+                MultiFileCodeResult result = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId)
+                        .generateMultiFileCode(userMessage);
                 yield CodeFileSaverExecutor.executeSaver(result, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> {
@@ -74,7 +87,7 @@ public class AiCodeGeneratorFacade {
      * @param codeGenTypeEnum 生成类型
      * @return 保存的目录
      */
-    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum) {
+    public Flux<StreamProcessChunk> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum) {
         return generateAndSaveCodeStream(userMessage, codeGenTypeEnum, null);
     }
 
@@ -86,29 +99,76 @@ public class AiCodeGeneratorFacade {
      * @param appId           应用 id（可选，用于关联应用）
      * @return 流式响应
      */
-    public Flux<String> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
+    public Flux<StreamProcessChunk> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId,
+                codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
-                yield processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
+                Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.HTML);
             }
             case MULTI_FILE -> {
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
-                yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+                Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.MULTI_FILE);
             }
             case VUE_PROJECT -> {
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
-                yield processTokenStream(tokenStream);
+                Flux<String> rawFlux = processTokenStream(tokenStream);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.VUE_PROJECT);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, errorMessage);
             }
         };
+    }
+
+    /**
+     * 使用执行器处理原始流，并在末尾追加完成标记
+     *
+     * @param rawFlux      原始流
+     * @param codeGenType  代码生成类型
+     * @return 处理后的流
+     */
+    private Flux<StreamProcessChunk> buildHandledFlux(Flux<String> rawFlux, CodeGenTypeEnum codeGenType) {
+        return streamHandlerExecutor.execute(rawFlux, codeGenType)
+                .concatWith(Flux.just(new StreamProcessChunk("[DONE]", "")));
+    }
+
+    /**
+     * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
+     *
+     * @param tokenStream TokenStream 对象
+     * @return Flux<String> 流式响应
+     */
+    private Flux<String> processTokenStream(TokenStream tokenStream) {
+        return Flux.create(sink -> {
+            tokenStream.onPartialResponse((String partialResponse) -> {
+                AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
+                sink.next(JSONUtil.toJsonStr(aiResponseMessage));
+            })
+                    .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
+                        ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
+                        sink.next(JSONUtil.toJsonStr(toolRequestMessage));
+                    })
+                    .onToolExecuted((ToolExecution toolExecution) -> {
+                        ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
+                        sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
+                    })
+                    .onCompleteResponse((ChatResponse response) -> {
+                        sink.complete();
+                    })
+                    .onError((Throwable error) -> {
+                        error.printStackTrace();
+                        sink.error(error);
+                    })
+                    .start();
+        });
     }
 
     /**
@@ -137,6 +197,6 @@ public class AiCodeGeneratorFacade {
             } catch (Exception e) {
                 log.error("保存失败: {}", e.getMessage());
             }
-        }).concatWith(Flux.just("[DONE]"));
+        });
     }
 }

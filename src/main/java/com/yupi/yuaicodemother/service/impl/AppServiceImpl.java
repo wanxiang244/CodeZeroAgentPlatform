@@ -15,6 +15,7 @@ import com.yupi.yuaicodemother.model.dto.AppQueryRequest;
 import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.entity.User;
 import com.yupi.yuaicodemother.mapper.AppMapper;
+import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.model.enums.MessageTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
@@ -290,10 +291,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         // 调用 AI 代码生成门面，流式生成代码
         return aiCodeGeneratorFacade.generateAndSaveCodeStream(actualUserMessage, codeGenType, appId)
                 .doOnNext(chunk -> {
-                    if (!"[DONE]".equals(chunk)) {
-                        aiReplyBuilder.append(chunk);
+                    String persistenceContent = chunk.getPersistenceContent();
+                    if (StrUtil.isNotBlank(persistenceContent)) {
+                        aiReplyBuilder.append(persistenceContent);
                     }
                 })
+                .map(StreamProcessChunk::getResponseContent)
                 .doOnComplete(() -> {
                     if (aiReplyBuilder.length() > 0) {
                         chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.AI, aiReplyBuilder.toString());
