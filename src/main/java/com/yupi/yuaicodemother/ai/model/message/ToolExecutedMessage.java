@@ -7,9 +7,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * 工具执行结果消息
- * 继承自 StreamMessage，表示工具执行完成后的结果
- * 当外部工具执行完成后，LangChain4j 会发送此类消息
- * 包含工具的标识、名称、调用参数和执行结果
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

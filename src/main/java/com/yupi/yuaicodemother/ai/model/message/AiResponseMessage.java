@@ -6,8 +6,6 @@ import lombok.NoArgsConstructor;
 
 /**
  * AI 响应消息
- * 继承自 StreamMessage，表示 AI 生成的文本响应
- * 在流式输出时，AI 每生成一个文本片段就会发送一条此类消息
  */
 @EqualsAndHashCode(callSuper = true)
 @Data

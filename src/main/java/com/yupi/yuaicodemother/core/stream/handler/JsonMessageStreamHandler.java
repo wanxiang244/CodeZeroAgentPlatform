@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.yupi.yuaicodemother.ai.model.message.AiResponseMessage;
 import com.yupi.yuaicodemother.ai.model.message.StreamMessage;
 import com.yupi.yuaicodemother.ai.model.message.StreamMessageTypeEnum;
+import com.yupi.yuaicodemother.ai.model.message.ToolExecutedMessage;
 import com.yupi.yuaicodemother.ai.model.message.ToolRequestMessage;
 import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
 import lombok.extern.slf4j.Slf4j;
@@ -90,7 +91,16 @@ public class JsonMessageStreamHandler implements StreamHandler {
                 String toolMessage = "选择工具：" + toolRequestMessage.getName();
                 yield new StreamProcessChunk(toolMessage, toolMessage);
             }
-            case TOOL_EXECUTED -> null; // 工具执行结果不需要展示给用户
+            case TOOL_EXECUTED -> {
+                // 工具执行结果消息，提取工具名称、调用参数和执行结果返回给前端
+                ToolExecutedMessage toolExecutedMessage = JSONUtil.toBean(rawMessage, ToolExecutedMessage.class);
+                String toolName = toolExecutedMessage.getName();
+                String arguments = toolExecutedMessage.getArguments();
+                String result = toolExecutedMessage.getResult();
+                // 构建格式：[工具调用] 工具名 参数\n结果
+                String toolMessage = "[工具调用] " + toolName + " " + arguments + "\n" + result;
+                yield new StreamProcessChunk(toolMessage, toolMessage);
+            }
         };
     }
 }
