@@ -82,10 +82,12 @@ public class AiCodeGeneratorFacade {
 
     /**
      * 统一入口：根据类型生成并保存代码（流式）
+     * 支持 HTML、多文件、Vue 项目三种代码生成类型的流式处理
+     * 返回 Flux<StreamProcessChunk>，包含响应内容和持久化内容
      *
      * @param userMessage     用户提示词
      * @param codeGenTypeEnum 生成类型
-     * @return 保存的目录
+     * @return 流式响应
      */
     public Flux<StreamProcessChunk> generateAndSaveCodeStream(String userMessage, CodeGenTypeEnum codeGenTypeEnum) {
         return generateAndSaveCodeStream(userMessage, codeGenTypeEnum, null);
@@ -93,6 +95,11 @@ public class AiCodeGeneratorFacade {
 
     /**
      * 统一入口：根据类型生成并保存代码（流式，支持 appId）
+     * 根据不同的代码生成类型调用不同的 AI 服务：
+     * - HTML: 调用 generateHtmlCodeStream，返回 Flux<String>
+     * - MULTI_FILE: 调用 generateMultiFileCodeStream，返回 Flux<String>
+     * - VUE_PROJECT: 调用 generateVueProjectCodeStream，返回 TokenStream（支持工具调用）
+     * 处理完成后返回 StreamProcessChunk 流，并在末尾追加 [DONE] 标记
      *
      * @param userMessage     用户提示词
      * @param codeGenTypeEnum 生成类型
@@ -103,20 +110,24 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
+        // 根据 appId 和 codeGenType 获取对应的 AI 服务实例
         AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId,
                 codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
+                // HTML 代码生成：调用流式接口，处理原始流，构建处理后的流
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
                 Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
                 yield buildHandledFlux(rawFlux, CodeGenTypeEnum.HTML);
             }
             case MULTI_FILE -> {
+                // 多文件代码生成：调用流式接口，处理原始流，构建处理后的流
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
                 Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
                 yield buildHandledFlux(rawFlux, CodeGenTypeEnum.MULTI_FILE);
             }
             case VUE_PROJECT -> {
+                // Vue 项目代码生成：调用 TokenStream 接口，支持工具调用
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
                 Flux<String> rawFlux = processTokenStream(tokenStream);
                 yield buildHandledFlux(rawFlux, CodeGenTypeEnum.VUE_PROJECT);
@@ -129,7 +140,8 @@ public class AiCodeGeneratorFacade {
     }
 
     /**
-     * 使用执行器处理原始流，并在末尾追加完成标记
+     * 使用执行器处理原始流，并在末尾追加完成标记 [DONE]
+     * 便于前端识别流式响应的结束位置
      *
      * @param rawFlux      原始流
      * @param codeGenType  代码生成类型
@@ -142,27 +154,39 @@ public class AiCodeGeneratorFacade {
 
     /**
      * 将 TokenStream 转换为 Flux<String>，并传递工具调用信息
+     * 监听 TokenStream 的各种事件：
+     * - onPartialResponse: AI 生成的文本片段
+     * - onPartialToolExecutionRequest: 工具调用请求
+     * - onToolExecuted: 工具执行完成
+     * - onCompleteResponse: 完整响应完成
+     * - onError: 错误处理
+     * 每种事件都会转换为对应的 JSON 消息格式发送给前端
      *
      * @param tokenStream TokenStream 对象
      * @return Flux<String> 流式响应
      */
     private Flux<String> processTokenStream(TokenStream tokenStream) {
         return Flux.create(sink -> {
+            // AI 生成的文本片段
             tokenStream.onPartialResponse((String partialResponse) -> {
                 AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
                 sink.next(JSONUtil.toJsonStr(aiResponseMessage));
             })
+                    // 工具调用请求
                     .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
                         ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
                         sink.next(JSONUtil.toJsonStr(toolRequestMessage));
                     })
+                    // 工具执行完成
                     .onToolExecuted((ToolExecution toolExecution) -> {
                         ToolExecutedMessage toolExecutedMessage = new ToolExecutedMessage(toolExecution);
                         sink.next(JSONUtil.toJsonStr(toolExecutedMessage));
                     })
+                    // 完整响应完成
                     .onCompleteResponse((ChatResponse response) -> {
                         sink.complete();
                     })
+                    // 错误处理
                     .onError((Throwable error) -> {
                         error.printStackTrace();
                         sink.error(error);

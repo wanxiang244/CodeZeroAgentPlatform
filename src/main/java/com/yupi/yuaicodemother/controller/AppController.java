@@ -78,8 +78,8 @@ public class AppController {
         String appName = initPrompt.length() > 12 ? initPrompt.substring(0, 12) : initPrompt;
         app.setAppName(appName);
         app.setInitPrompt(initPrompt);
-        // 默认代码生成类型：多文件生成
-        app.setCodeGenType(CodeGenTypeEnum.MULTI_FILE.getValue());
+        // 默认代码生成类型：Vue 工程模式（暂时修改）
+        app.setCodeGenType(CodeGenTypeEnum.VUE_PROJECT.getValue());
         app.setUserId(loginUser.getId());
 
         // 保存应用

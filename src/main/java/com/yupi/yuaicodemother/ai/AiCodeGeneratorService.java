@@ -9,6 +9,11 @@ import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.UserMessage;
 import reactor.core.publisher.Flux;
 
+/**
+ * AI 代码生成服务接口
+ * 定义 HTML、单文件、多文件、Vue 项目等多种代码生成方式
+ * 支持同步和流式两种返回模式
+ */
 public interface AiCodeGeneratorService {
 
     /**

@@ -4,7 +4,9 @@ import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
 import reactor.core.publisher.Flux;
 
 /**
- * Flux 流处理器
+ * Flux 流处理器接口
+ * 定义流式处理器的统一接口，用于处理不同类型的流式响应
+ * 支持简单文本流和 JSON 消息流等多种处理模式
  */
 public interface StreamHandler {
 

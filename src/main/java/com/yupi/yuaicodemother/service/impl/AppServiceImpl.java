@@ -251,6 +251,22 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         return true;
     }
 
+    /**
+     * 流式对话生成代码
+     * 用户发送消息后，AI 根据消息内容流式生成代码
+     * 流程：
+     * 1. 参数校验和应用查询
+     * 2. 权限校验（只能操作自己的应用）
+     * 3. 保存用户消息到聊天历史
+     * 4. 调用 AI 代码生成门面流式生成代码
+     * 5. 收集持久化内容用于保存 AI 回复
+     * 6. 返回给前端的响应内容（去除持久化标记）
+     *
+     * @param appId      应用 ID
+     * @param userId    用户 ID
+     * @param userMessage 用户消息
+     * @return 流式响应字符串
+     */
     @Override
     public Flux<String> chatToGenCode(Long appId, Long userId, String userMessage) {
         // 参数校验
@@ -272,11 +288,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限操作该应用");
         }
 
+        // 获取实际的用户消息，如果为空则使用应用的初始化提示词
         String actualUserMessage = StrUtil.blankToDefault(StrUtil.trim(userMessage), app.getInitPrompt());
         if (StrUtil.isBlank(actualUserMessage)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户消息不能为空");
         }
 
+        // 保存用户消息到聊天历史
         chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.USER, actualUserMessage);
 
         // 获取代码生成类型
@@ -286,23 +304,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             codeGenType = CodeGenTypeEnum.MULTI_FILE; // 默认多文件生成
         }
 
+        // 用于收集持久化内容（完整的 AI 回复）
         StringBuilder aiReplyBuilder = new StringBuilder();
 
         // 调用 AI 代码生成门面，流式生成代码
+        // 处理流程：
+        // 1. doOnNext: 收集 persistenceContent 用于保存完整的 AI 回复
+        // 2. map: 将 StreamProcessChunk 转换为纯文本返回给前端
+        // 3. doOnComplete: 流结束后保存 AI 回复到聊天历史
+        // 4. doOnError: 异常时保存错误消息到聊天历史
         return aiCodeGeneratorFacade.generateAndSaveCodeStream(actualUserMessage, codeGenType, appId)
                 .doOnNext(chunk -> {
+                    // 收集持久化内容
                     String persistenceContent = chunk.getPersistenceContent();
                     if (StrUtil.isNotBlank(persistenceContent)) {
                         aiReplyBuilder.append(persistenceContent);
                     }
                 })
+                // 只返回 responseContent 给前端，去除持久化相关的标记
                 .map(StreamProcessChunk::getResponseContent)
                 .doOnComplete(() -> {
+                    // 流结束后保存 AI 回复
                     if (aiReplyBuilder.length() > 0) {
                         chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.AI, aiReplyBuilder.toString());
                     }
                 })
                 .doOnError(error -> {
+                    // 异常时保存错误消息
                     String errorMessage = buildChatErrorMessage(aiReplyBuilder.toString(), error);
                     chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.ERROR, errorMessage);
                 });
