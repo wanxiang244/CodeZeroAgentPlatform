@@ -158,7 +158,7 @@ import {
   getAppVoById
 } from '@/api/appController'
 import { listAppChatHistoryByPage } from '@/api/chatHistoryController'
-import { API_BASE_URL, APP_PREVIEW_BASE_URL } from '@/config/env'
+import { API_BASE_URL, APP_PREVIEW_BASE_URL, APP_DEPLOY_BASE_URL } from '@/config/env'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { renderMarkdown } from '@/utils/markdown'
 import 'highlight.js/styles/github-dark.css'
@@ -226,12 +226,25 @@ const updatePreviewUrl = () => {
     previewUrl.value = ''
     return
   }
-  previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${appId.value}/`
+  // HTML 和多文件项目：从 static 目录读取源代码预览
+  if (app.value.codeGenType === 'html' || app.value.codeGenType === 'multi_file') {
+    previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${appId.value}/`
+  }
+  // Vue 项目：直接跳转到部署的 URL（通过 deployKey 访问）
+  // Vue 项目部署后会生成 dist 目录，访问部署域名/deployKey 即可
 }
 
 const refreshPreviewByMessageCount = (messageCount: number) => {
   if (messageCount >= 2) {
-    updatePreviewUrl()
+    // 非 Vue 项目：代码生成完成后直接显示预览
+    if (app.value?.codeGenType !== 'vue_project') {
+      updatePreviewUrl()
+    }
+    // Vue 项目：需要用户部署后通过 deployKey 显示预览
+    // deployKey 存在时更新预览 URL
+    if (app.value?.codeGenType === 'vue_project' && app.value?.deployKey) {
+      previewUrl.value = `${APP_DEPLOY_BASE_URL}/${app.value.deployKey}`
+    }
   }
 }
 
@@ -243,6 +256,16 @@ const fetchApp = async () => {
     const response = await getAppVoById({ id: currentAppId as never })
     if (response.data?.code === 0) {
       app.value = response.data.data ?? null
+      // 应用已部署时，根据项目类型更新预览 URL
+      if (app.value?.deployKey) {
+        if (app.value.codeGenType === 'vue_project') {
+          // Vue 项目：使用部署的 URL
+          previewUrl.value = `${APP_DEPLOY_BASE_URL}/${app.value.deployKey}`
+        } else {
+          // HTML/多文件项目：使用 static 目录
+          previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${currentAppId}/`
+        }
+      }
     }
   } catch (error) {
     console.error('获取应用详情失败:', error)
@@ -417,7 +440,19 @@ const handleDeploy = async () => {
   try {
     const response = await deployApp({ appId: currentAppId as never })
     if (response.data?.code === 0) {
-      message.success(`部署成功！访问地址: ${response.data.data}`)
+      const deployUrl = response.data.data
+      // 更新应用中存储 deployKey 并刷新预览
+      if (app.value && deployUrl) {
+        // 从部署 URL 中提取 deployKey
+        const urlParts = deployUrl.split('/')
+        const deployKey = urlParts[urlParts.length - 1]
+        app.value.deployKey = deployKey
+        // Vue 项目：直接跳转到部署的 URL
+        if (app.value.codeGenType === 'vue_project') {
+          previewUrl.value = deployUrl
+        }
+      }
+      message.success(`部署成功！访问地址: ${deployUrl}`)
     }
   } catch (error) {
     console.error('部署失败:', error)
