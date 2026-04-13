@@ -255,14 +255,68 @@ public class VueProjectBuilder {
     }
 
     /**
+     * 构建 Vue 项目（完整流程，同步执行）
+     * 依次执行：安装依赖 -> 打包构建 -> 验证产物
+     * 该方法会阻塞调用线程，适用于部署场景
+     *
+     * @param appId 应用 ID，用于定位项目目录
+     * @return 构建是否成功
+     */
+    public boolean buildVueProjectSync(Long appId) {
+        if (appId == null) {
+            log.warn("appId 为空，无法执行构建");
+            return false;
+        }
+
+        try {
+            // 获取项目目录路径
+            File projectDir = getProjectDir(appId);
+            log.info("开始同步构建 Vue 项目，appId: {}, 目录: {}", appId, projectDir.getAbsolutePath());
+
+            // 执行安装依赖
+            boolean installSuccess = installDependencies(projectDir);
+            if (!installSuccess) {
+                log.error("Vue 项目依赖安装失败，appId: {}", appId);
+                return false;
+            }
+
+            // 执行打包构建
+            boolean buildSuccess = buildProject(projectDir);
+            if (!buildSuccess) {
+                log.error("Vue 项目打包构建失败，appId: {}", appId);
+                return false;
+            }
+
+            log.info("Vue 项目同步构建完成，appId: {}, 构建产物目录: {}",
+                    appId, new File(projectDir, "dist").getAbsolutePath());
+            return true;
+        } catch (Exception e) {
+            log.error("Vue 项目同步构建过程发生异常，appId: {}", appId, e);
+            return false;
+        }
+    }
+
+    /**
      * 根据 appId 获取 Vue 项目目录
      * Vue 项目保存在 CODE_OUTPUT_ROOT_DIR/vue_project_{appId} 目录下
      *
      * @param appId 应用 ID
      * @return 项目目录
      */
-    private File getProjectDir(Long appId) {
+    public File getProjectDir(Long appId) {
         String projectDirPath = System.getProperty("user.dir") + "/tmp/code_output/vue_project_" + appId;
         return new File(projectDirPath);
+    }
+
+    /**
+     * 根据 appId 获取 Vue 项目构建后的 dist 目录
+     * dist 目录位于项目目录下，包含打包后的静态文件
+     *
+     * @param appId 应用 ID
+     * @return dist 目录
+     */
+    public File getDistDir(Long appId) {
+        File projectDir = getProjectDir(appId);
+        return new File(projectDir, "dist");
     }
 }

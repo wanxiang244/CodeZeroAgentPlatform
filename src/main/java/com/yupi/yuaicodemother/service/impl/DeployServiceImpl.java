@@ -4,12 +4,15 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.yupi.yuaicodemother.constant.AppConstant;
+import com.yupi.yuaicodemother.core.builder.VueProjectBuilder;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.model.entity.App;
+import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.DeployService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -20,14 +23,22 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 应用部署服务实现类
+ * 支持 HTML、多文件和 Vue 项目三种类型的部署
  *
  * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
  */
+@Slf4j
 @Service
 public class DeployServiceImpl implements DeployService {
 
     @Resource
     private AppService appService;
+
+    /**
+     * Vue 项目构建器，用于构建 Vue 项目并获取 dist 目录
+     */
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
     // 随机字符串字符集（大小写字母+数字）
     private static final String BASE_CHAR = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -68,8 +79,31 @@ public class DeployServiceImpl implements DeployService {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "应用代码生成类型为空");
         }
 
-        // 源目录路径
-        String sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/" + codeGenType + "_" + appId;
+        // 源目录路径（根据项目类型动态确定）
+        String sourceDirPath;
+
+        // 判断是否为 Vue 项目类型
+        boolean isVueProject = CodeGenTypeEnum.VUE_PROJECT.getValue().equals(codeGenType);
+
+        // 如果是 Vue 项目，先执行构建
+        if (isVueProject) {
+            log.info("检测到 Vue 项目，开始执行构建，appId: {}", appId);
+            boolean buildSuccess = vueProjectBuilder.buildVueProjectSync(appId);
+            if (!buildSuccess) {
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "Vue 项目构建失败，无法部署");
+            }
+            // Vue 项目使用 dist 目录作为源目录
+            File distDir = vueProjectBuilder.getDistDir(appId);
+            if (!distDir.exists() || !distDir.isDirectory()) {
+                throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "Vue 项目构建产物不存在，请先生成代码");
+            }
+            sourceDirPath = distDir.getAbsolutePath();
+            log.info("Vue 项目构建成功，使用 dist 目录作为部署源：{}", sourceDirPath);
+        } else {
+            // 源目录路径（非 Vue 项目）
+            sourceDirPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/" + codeGenType + "_" + appId;
+        }
+
         // 检查源目录是否存在
         if (!FileUtil.exist(sourceDirPath)) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件不存在，请先生成代码");
