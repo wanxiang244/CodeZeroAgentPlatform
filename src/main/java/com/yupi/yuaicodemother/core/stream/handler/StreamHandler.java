@@ -11,10 +11,20 @@ import reactor.core.publisher.Flux;
 public interface StreamHandler {
 
     /**
-     * 处理原始流
+     * 处理原始流（无 appId）
      *
      * @param rawFlux 原始流
      * @return 处理后的结果流
      */
     Flux<StreamProcessChunk> handle(Flux<String> rawFlux);
+
+    /**
+     * 处理原始流（支持 appId）
+     * appId 用于 Vue 项目构建时定位项目目录
+     *
+     * @param rawFlux 原始流
+     * @param appId   应用 ID（可选，用于 Vue 项目构建）
+     * @return 处理后的结果流
+     */
+    Flux<StreamProcessChunk> handle(Flux<String> rawFlux, Long appId);
 }

@@ -7,7 +7,9 @@ import com.yupi.yuaicodemother.ai.model.message.StreamMessage;
 import com.yupi.yuaicodemother.ai.model.message.StreamMessageTypeEnum;
 import com.yupi.yuaicodemother.ai.model.message.ToolExecutedMessage;
 import com.yupi.yuaicodemother.ai.model.message.ToolRequestMessage;
+import com.yupi.yuaicodemother.core.builder.VueProjectBuilder;
 import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -20,13 +22,20 @@ import java.util.concurrent.ConcurrentHashMap;
  * 用于处理 Vue 项目生成的 JSON 格式流式响应
  * 解析 AI 响应消息、工具请求消息和工具执行消息，转换为 StreamProcessChunk
  * 工具请求消息只会首次出现时输出，避免重复展示相同的工具调用信息
+ * 流式输出完成后，会自动触发 Vue 项目的构建流程
  */
 @Component
 @Slf4j
 public class JsonMessageStreamHandler implements StreamHandler {
 
     /**
-     * 处理 JSON 消息流
+     * Vue 项目构建器，用于在流式输出完成后执行构建
+     */
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
+
+    /**
+     * 处理 JSON 消息流（无 appId）
      * 解析每条 JSON 消息，根据消息类型转换为对应的 StreamProcessChunk
      * 工具请求消息只在首次出现时输出，防止重复展示
      *
@@ -35,6 +44,20 @@ public class JsonMessageStreamHandler implements StreamHandler {
      */
     @Override
     public Flux<StreamProcessChunk> handle(Flux<String> rawFlux) {
+        return handle(rawFlux, null);
+    }
+
+    /**
+     * 处理 JSON 消息流（支持 appId）
+     * 解析每条 JSON 消息，根据消息类型转换为对应的 StreamProcessChunk
+     * 流式输出完成后，使用 appId 执行 Vue 项目构建
+     *
+     * @param rawFlux 原始流
+     * @param appId   应用 ID（用于 Vue 项目构建）
+     * @return 处理后的结果流
+     */
+    @Override
+    public Flux<StreamProcessChunk> handle(Flux<String> rawFlux, Long appId) {
         // 使用 ConcurrentHashMap 的 keySet 来跟踪已输出过的工具 ID，保证线程安全
         Set<String> firstOutputToolIdSet = ConcurrentHashMap.newKeySet();
         return rawFlux.flatMap(rawMessage -> {
@@ -44,6 +67,12 @@ public class JsonMessageStreamHandler implements StreamHandler {
                 return Flux.empty();
             }
             return Flux.just(processChunk);
+        }).doOnComplete(() -> {
+            // 流式输出完成后，执行 Vue 项目构建
+            if (appId != null) {
+                log.info("流式输出完成，开始构建 Vue 项目，appId: {}", appId);
+                vueProjectBuilder.buildVueProject(appId);
+            }
         });
     }
 

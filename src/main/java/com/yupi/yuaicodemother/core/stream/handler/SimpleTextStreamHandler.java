@@ -13,7 +13,7 @@ import reactor.core.publisher.Flux;
 public class SimpleTextStreamHandler implements StreamHandler {
 
     /**
-     * 处理原始文本流
+     * 处理原始文本流（无 appId）
      * 将每个字符串块直接封装为 StreamProcessChunk，responseContent 和 persistenceContent 相同
      *
      * @param rawFlux 原始流
@@ -21,6 +21,19 @@ public class SimpleTextStreamHandler implements StreamHandler {
      */
     @Override
     public Flux<StreamProcessChunk> handle(Flux<String> rawFlux) {
+        return handle(rawFlux, null);
+    }
+
+    /**
+     * 处理原始文本流（支持 appId）
+     * SimpleTextStreamHandler 不需要 appId，直接忽略该参数
+     *
+     * @param rawFlux 原始流
+     * @param appId   应用 ID（对于简单文本处理器无意义，直接忽略）
+     * @return 处理后的结果流
+     */
+    @Override
+    public Flux<StreamProcessChunk> handle(Flux<String> rawFlux, Long appId) {
         return rawFlux.map(chunk -> new StreamProcessChunk(chunk, chunk));
     }
 }

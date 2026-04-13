@@ -118,19 +118,19 @@ public class AiCodeGeneratorFacade {
                 // HTML 代码生成：调用流式接口，处理原始流，构建处理后的流
                 Flux<String> codeStream = aiCodeGeneratorService.generateHtmlCodeStream(userMessage);
                 Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.HTML, appId);
-                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.HTML);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.HTML, appId);
             }
             case MULTI_FILE -> {
                 // 多文件代码生成：调用流式接口，处理原始流，构建处理后的流
                 Flux<String> codeStream = aiCodeGeneratorService.generateMultiFileCodeStream(userMessage);
                 Flux<String> rawFlux = processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
-                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.MULTI_FILE);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             case VUE_PROJECT -> {
                 // Vue 项目代码生成：调用 TokenStream 接口，支持工具调用
                 TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
                 Flux<String> rawFlux = processTokenStream(tokenStream);
-                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.VUE_PROJECT);
+                yield buildHandledFlux(rawFlux, CodeGenTypeEnum.VUE_PROJECT, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
@@ -143,12 +143,26 @@ public class AiCodeGeneratorFacade {
      * 使用执行器处理原始流，并在末尾追加完成标记 [DONE]
      * 便于前端识别流式响应的结束位置
      *
-     * @param rawFlux      原始流
-     * @param codeGenType  代码生成类型
+     * @param rawFlux     原始流
+     * @param codeGenType 代码生成类型
      * @return 处理后的流
      */
     private Flux<StreamProcessChunk> buildHandledFlux(Flux<String> rawFlux, CodeGenTypeEnum codeGenType) {
-        return streamHandlerExecutor.execute(rawFlux, codeGenType)
+        return buildHandledFlux(rawFlux, codeGenType, null);
+    }
+
+    /**
+     * 使用执行器处理原始流，并在末尾追加完成标记 [DONE]
+     * 便于前端识别流式响应的结束位置
+     * appId 用于 Vue 项目构建时定位项目目录
+     *
+     * @param rawFlux     原始流
+     * @param codeGenType 代码生成类型
+     * @param appId       应用 ID（可选，用于 Vue 项目构建）
+     * @return 处理后的流
+     */
+    private Flux<StreamProcessChunk> buildHandledFlux(Flux<String> rawFlux, CodeGenTypeEnum codeGenType, Long appId) {
+        return streamHandlerExecutor.execute(rawFlux, codeGenType, appId)
                 .concatWith(Flux.just(new StreamProcessChunk("[DONE]", "")));
     }
 

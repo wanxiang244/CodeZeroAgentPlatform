@@ -27,13 +27,26 @@ public class StreamHandlerExecutor {
     private JsonMessageStreamHandler jsonMessageStreamHandler;
 
     /**
-     * 根据生成类型执行对应处理器
+     * 根据生成类型执行对应处理器（无 appId）
      *
-     * @param rawFlux      原始流
-     * @param codeGenType  代码生成类型
+     * @param rawFlux     原始流
+     * @param codeGenType 代码生成类型
      * @return 处理结果流
      */
     public Flux<StreamProcessChunk> execute(Flux<String> rawFlux, CodeGenTypeEnum codeGenType) {
+        return execute(rawFlux, codeGenType, null);
+    }
+
+    /**
+     * 根据生成类型执行对应处理器（支持 appId）
+     * appId 用于 Vue 项目构建时定位项目目录
+     *
+     * @param rawFlux     原始流
+     * @param codeGenType 代码生成类型
+     * @param appId       应用 ID（可选，用于 Vue 项目构建）
+     * @return 处理结果流
+     */
+    public Flux<StreamProcessChunk> execute(Flux<String> rawFlux, CodeGenTypeEnum codeGenType, Long appId) {
         // 根据代码生成类型选择合适的流处理器
         StreamHandler streamHandler = switch (codeGenType) {
             // HTML 和多文件代码生成使用简单文本处理器
@@ -42,6 +55,6 @@ public class StreamHandlerExecutor {
             case VUE_PROJECT -> jsonMessageStreamHandler;
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的流处理类型：" + codeGenType.getValue());
         };
-        return streamHandler.handle(rawFlux);
+        return streamHandler.handle(rawFlux, appId);
     }
 }
