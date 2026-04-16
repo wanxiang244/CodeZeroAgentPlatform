@@ -44,9 +44,9 @@ public class StaticResourceController {
                 headers.add("Location", request.getRequestURI() + "/");
                 return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
             }
-            // 默认返回 index.html
-            if (resourcePath.equals("/")) {
-                resourcePath = "/index.html";
+            // 默认返回 index.html（处理 / 和 /xxx/ 两种目录访问形式）
+            if (resourcePath.equals("/") || resourcePath.endsWith("/")) {
+                resourcePath = resourcePath + "index.html";
             }
             // 构建文件路径
             String filePath = PREVIEW_ROOT_DIR + "/" + deployKey + resourcePath;
