@@ -179,7 +179,7 @@ import { ref, onMounted } from 'vue'
 import { message } from 'ant-design-vue'
 import { useRouter } from 'vue-router'
 import * as appController from '@/api/appController'
-import { APP_DEPLOY_BASE_URL } from '@/config/env'
+import { APP_PREVIEW_BASE_URL, APP_DEPLOY_BASE_URL } from '@/config/env'
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons-vue'
 
 const router = useRouter()
@@ -300,7 +300,10 @@ const openAppWork = (app: API.AppVO) => {
     message.info('该应用还没有可查看的作品')
     return
   }
-  window.open(`${APP_DEPLOY_BASE_URL}/${app.deployKey}`, '_blank', 'noopener,noreferrer')
+  // Vue 项目需要添加 /dist 后缀
+  const distSuffix = app.codeGenType === 'vue_project' ? '/dist' : ''
+  const url = `${APP_PREVIEW_BASE_URL}/static/${app.codeGenType}_${app.id}${distSuffix}/`
+  window.open(url, '_blank', 'noopener,noreferrer')
 }
 
 // 分页变化处理

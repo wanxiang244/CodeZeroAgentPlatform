@@ -226,8 +226,10 @@ const updatePreviewUrl = () => {
     previewUrl.value = ''
     return
   }
+  // Vue 项目需要添加 /dist 后缀
+  const distSuffix = app.value.codeGenType === 'vue_project' ? '/dist' : ''
   // 所有项目类型：从 static 目录读取源代码预览
-  previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${appId.value}/`
+  previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${appId.value}${distSuffix}/`
 }
 
 const refreshPreviewByMessageCount = (messageCount: number) => {
@@ -246,7 +248,8 @@ const fetchApp = async () => {
       app.value = response.data.data ?? null
       // 应用已部署时，根据项目类型更新预览 URL
       if (app.value?.deployKey) {
-        previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${currentAppId}/`
+        const distSuffix = app.value.codeGenType === 'vue_project' ? '/dist' : ''
+        previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${currentAppId}${distSuffix}/`
       }
     }
   } catch (error) {
