@@ -11,6 +11,7 @@ import com.yupi.yuaicodemother.model.entity.App;
 import com.yupi.yuaicodemother.model.enums.CodeGenTypeEnum;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.DeployService;
+import com.yupi.yuaicodemother.service.ScreenshotService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -34,11 +37,19 @@ public class DeployServiceImpl implements DeployService {
     @Resource
     private AppService appService;
 
+    @Resource
+    private ScreenshotService screenshotService;
+
     /**
      * Vue 项目构建器，用于构建 Vue 项目并获取 dist 目录
      */
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    /**
+     * 虚拟线程执行器，用于异步执行截图任务
+     */
+    private final ExecutorService virtualThreadExecutor = Executors.newVirtualThreadPerTaskExecutor();
 
     // 随机字符串字符集（大小写字母+数字）
     private static final String BASE_CHAR = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -153,7 +164,28 @@ public class DeployServiceImpl implements DeployService {
         }
 
         // 返回部署URL
-        return StrUtil.removeSuffix(AppConstant.APP_DEPLOY_DOMAIN, "/") + "/" + deployKey;
+        String resultUrl = StrUtil.removeSuffix(AppConstant.APP_DEPLOY_DOMAIN, "/") + "/" + deployKey;
+
+        // 异步生成截图（不阻塞部署流程）
+        final Long finalAppId = appId;
+        final String finalDeployUrl = resultUrl;
+        virtualThreadExecutor.submit(() -> {
+            try {
+                String coverUrl = screenshotService.generateAndUploadScreenshot(finalDeployUrl);
+                if (StrUtil.isNotBlank(coverUrl)) {
+                    // 更新应用的 cover 字段
+                    App updateApp = new App();
+                    updateApp.setId(finalAppId);
+                    updateApp.setCover(coverUrl);
+                    appService.updateById(updateApp);
+                    log.info("应用 {} 截图生成成功: {}", finalAppId, coverUrl);
+                }
+            } catch (Exception e) {
+                log.error("应用 {} 截图生成失败: {}", finalAppId, e.getMessage());
+            }
+        });
+
+        return resultUrl;
     }
 
     /**
