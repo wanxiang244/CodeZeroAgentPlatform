@@ -124,21 +124,20 @@ public class DeployServiceImpl implements DeployService {
         String targetDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + "/" + deployKey;
 
         try {
-            // 创建目标目录（如果不存在）
+            // 清理并重新创建目标目录，确保干净的部署
+            if (FileUtil.exist(targetDirPath)) {
+                FileUtil.del(targetDirPath);
+            }
             FileUtil.mkdir(targetDirPath);
 
-            // 获取源目录下的所有文件名
+            // 检查源目录是否存在文件
             List<String> fileNames = FileUtil.listFileNames(sourceDirPath);
             if (fileNames == null || fileNames.isEmpty()) {
                 throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件为空，请先生成代码");
             }
 
-            // 将源目录下的所有文件复制到目标目录（覆盖现有文件）
-            for (String fileName : fileNames) {
-                String sourceFilePath = sourceDirPath + "/" + fileName;
-                String targetFilePath = targetDirPath + "/" + fileName;
-                FileUtil.copy(sourceFilePath, targetFilePath, true);
-            }
+            // 递归复制整个目录（包括子目录和所有文件）
+            FileUtil.copy(sourceDirPath, targetDirPath, true);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：" + e.getMessage());
         }
