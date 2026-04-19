@@ -136,8 +136,7 @@ public class DeployServiceImpl implements DeployService {
                 throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "应用代码文件为空，请先生成代码");
             }
 
-            // 递归复制整个目录（包括子目录和所有文件）
-            FileUtil.copy(sourceDirPath, targetDirPath, true);
+            FileUtil.copyContent(new File(sourceDirPath), new File(targetDirPath), true);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "部署失败：" + e.getMessage());
         }
