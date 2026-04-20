@@ -2,6 +2,7 @@ package com.yupi.yuaicodemother.controller;
 
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
+import com.yupi.yuaicodemother.ai.AiCodeGenTypeRoutingService;
 import com.yupi.yuaicodemother.annotation.AuthCheck;
 import com.yupi.yuaicodemother.common.BaseResponse;
 import com.yupi.yuaicodemother.common.ResultUtils;
@@ -56,6 +57,9 @@ public class AppController {
 
     @Resource
     private ProjectDownloadService projectDownloadService;
+
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
     // ==================== 用户端接口 ====================
 
     /**
@@ -84,10 +88,9 @@ public class AppController {
         String appName = initPrompt.length() > 12 ? initPrompt.substring(0, 12) : initPrompt;
         app.setAppName(appName);
         app.setInitPrompt(initPrompt);
-        // 默认代码生成类型：Vue 工程模式（暂时修改）
-        app.setCodeGenType(CodeGenTypeEnum.VUE_PROJECT.getValue());
+        // 代码生成类型：根据提示词路由
+        app.setCodeGenType(aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt).getValue());
         app.setUserId(loginUser.getId());
-
         // 保存应用
         boolean result = appService.save(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

@@ -285,3 +285,6 @@ A: 后端运行后执行 `npm run openapi2ts`，自动从 `/api/doc.html` 拉取
 
 **Q: application-local.yml 在哪里创建？**
 A: 放在 `src/main/resources/application-local.yml`，该文件已在 `.gitignore` 中，不会提交到版本库。
+
+## 注意
+注意，无论如何，整个项目前端都不应该将 appId 转为 Number，这样会丢失精度！如果有 ts 报错，用其他的方式修复
