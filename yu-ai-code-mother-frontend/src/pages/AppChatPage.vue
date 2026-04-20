@@ -459,22 +459,28 @@ const handleDownloadCode = async () => {
 
   downloadLoading.value = true
   try {
-    const response = await downloadAppCode(
-      { appId: currentAppId as never },
-      { responseType: 'blob' }
-    )
-    if (response instanceof Blob) {
-      const blob = response
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `${currentAppId}.zip`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
-      message.success('下载成功')
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
+    const response = await fetch(`${API_BASE_URL}/app/download/${currentAppId}`, {
+      credentials: 'include'
+    })
+    if (!response.ok) {
+      if (response.status === 401) {
+        message.warning('请先登录')
+        window.location.href = `/user/login?redirect=${window.location.href}`
+        return
+      }
+      throw new Error('下载失败')
     }
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${currentAppId}.zip`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    message.success('下载成功')
   } catch (error) {
     console.error('下载失败:', error)
     message.error('下载失败')
