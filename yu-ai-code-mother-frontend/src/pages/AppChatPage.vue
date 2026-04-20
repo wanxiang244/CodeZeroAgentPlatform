@@ -9,6 +9,13 @@
           </a-button>
           <a-button
             v-if="app?.id && isOwner"
+            :loading="downloadLoading"
+            @click="handleDownloadCode"
+          >
+            下载代码
+          </a-button>
+          <a-button
+            v-if="app?.id && isOwner"
             type="primary"
             :loading="deployLoading"
             @click="handleDeploy"
@@ -155,6 +162,7 @@ import {
   adminDeleteApp,
   deleteApp,
   deployApp,
+  downloadAppCode,
   getAppVoById
 } from '@/api/appController'
 import { listAppChatHistoryByPage } from '@/api/chatHistoryController'
@@ -189,6 +197,7 @@ const loading = ref(false)
 const historyLoading = ref(false)
 const loadMoreLoading = ref(false)
 const deployLoading = ref(false)
+const downloadLoading = ref(false)
 const previewUrl = ref('')
 const hasMoreHistory = ref(false)
 const nextCursorCreateTime = ref<string>()
@@ -441,6 +450,36 @@ const handleDeploy = async () => {
     message.error('部署失败')
   } finally {
     deployLoading.value = false
+  }
+}
+
+const handleDownloadCode = async () => {
+  const currentAppId = appId.value
+  if (!currentAppId) return
+
+  downloadLoading.value = true
+  try {
+    const response = await downloadAppCode(
+      { appId: currentAppId as never },
+      { responseType: 'blob' }
+    )
+    if (response instanceof Blob) {
+      const blob = response
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${currentAppId}.zip`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      message.success('下载成功')
+    }
+  } catch (error) {
+    console.error('下载失败:', error)
+    message.error('下载失败')
+  } finally {
+    downloadLoading.value = false
   }
 }
 
