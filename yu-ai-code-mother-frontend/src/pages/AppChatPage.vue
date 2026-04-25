@@ -76,6 +76,22 @@
           </div>
 
           <div class="input-container">
+            <div v-if="selectedElements.length > 0" class="selected-elements-alert">
+              <a-alert
+                v-for="(element, index) in selectedElements"
+                :key="index"
+                type="info"
+                show-icon
+                closable
+                @close="(e: Event) => { e.preventDefault(); visualEditor.removeElement(index) }"
+                class="selected-element-item"
+              >
+                <template #message>
+                  <span class="element-tag-name">&lt;{{ element.tagName }}{{ element.id ? ` #${element.id}` : '' }}{{ element.className ? ` .${element.className.split(' ').join(' .')}` : '' }}&gt;</span>
+                  {{ element.textContent && element.textContent.length > 20 ? `${element.textContent.substring(0, 20)}...` : element.textContent }}
+                </template>
+              </a-alert>
+            </div>
             <a-tooltip :title="isReadonly ? '无法在别人的作品下对话哦~' : null">
               <div>
                 <a-textarea
@@ -87,15 +103,32 @@
                 />
               </div>
             </a-tooltip>
-            <a-button
-              type="primary"
-              :loading="loading"
-              :disabled="isReadonly"
-              style="margin-top: 8px;"
-              @click="handleSend"
-            >
-              发送
-            </a-button>
+            <div class="input-actions">
+              <a-button
+                v-if="!isEditMode"
+                :disabled="isReadonly"
+                @click="handleEnterEditMode"
+              >
+                <template #icon><EditOutlined /></template>
+                编辑
+              </a-button>
+              <a-button
+                v-else
+                danger
+                @click="handleExitEditMode"
+              >
+                <template #icon><EditOutlined /></template>
+                退出编辑
+              </a-button>
+              <a-button
+                type="primary"
+                :loading="loading"
+                :disabled="isReadonly"
+                @click="handleSend"
+              >
+                发送
+              </a-button>
+            </div>
           </div>
         </div>
 
@@ -105,6 +138,7 @@
           </div>
           <iframe
             v-else
+            ref="previewIframe"
             :src="previewUrl"
             class="preview-iframe"
             frameborder="0"
@@ -155,8 +189,10 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
+import { useVisualEditor } from '@/composables/useVisualEditor'
 import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
+import { EditOutlined } from '@ant-design/icons-vue'
 import dayjs from 'dayjs'
 import {
   adminDeleteApp,
@@ -205,6 +241,18 @@ const nextCursorId = ref<number>()
 const loadedHistoryCount = ref(0)
 const showAppDetail = ref(false)
 const messagesContainer = ref<HTMLDivElement | null>(null)
+const previewIframe = ref<HTMLIFrameElement | null>(null)
+const visualEditor = useVisualEditor({
+  iframeRef: previewIframe,
+  onElementSelected: (element) => {
+    console.log('Element selected:', element)
+  },
+  onExitEditMode: () => {
+    console.log('Exit edit mode')
+  }
+})
+const isEditMode = visualEditor.isEditMode
+const selectedElements = visualEditor.selectedElements
 
 const isOwner = computed(() => !!app.value?.userId && app.value.userId === loginUserStore.loginUser.id)
 const isAdmin = computed(() => loginUserStore.loginUser.userRole === 'admin')
@@ -417,12 +465,34 @@ const loadMoreHistory = async () => {
   await fetchChatHistory(true)
 }
 
+const handleEnterEditMode = () => {
+  visualEditor.enterEditMode()
+}
+
+const handleExitEditMode = () => {
+  visualEditor.exitEditMode()
+}
+
 const handleSend = async () => {
   if (!userInput.value.trim() || loading.value || isReadonly.value) {
     return
   }
-  const currentMessage = userInput.value.trim()
+
+  let currentMessage = userInput.value.trim()
   userInput.value = ''
+
+  // Add selected elements info to prompt
+  if (selectedElements.value.length > 0) {
+    const elementsInfo = selectedElements.value
+      .map(el => `<${el.tagName}${el.id ? ` id="${el.id}"` : ''}${el.className ? ` class="${el.className}"` : ''}>${el.textContent || ''}</${el.tagName}>`)
+      .join('\n')
+    currentMessage = `请修改以下元素：\n${elementsInfo}\n\n用户需求：${currentMessage}`
+
+    // Clear selection and exit edit mode after sending
+    visualEditor.clearSelection()
+    isEditMode.value = false
+  }
+
   await startStreamGeneration(currentMessage)
 }
 
@@ -837,5 +907,41 @@ onMounted(async () => {
     border-right: none;
     border-bottom: 1px solid var(--color-border);
   }
+}
+
+.selected-elements-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.selected-element-item {
+  padding: 4px 8px;
+}
+
+.selected-element-item :deep(.ant-alert-message) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.element-tag-name {
+  font-family: 'JetBrains Mono', 'Fira Code', Consolas, Monaco, monospace;
+  font-size: 12px;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.input-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.input-actions .ant-btn {
+  flex: 1;
 }
 </style>
