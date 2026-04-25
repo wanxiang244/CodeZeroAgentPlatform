@@ -286,7 +286,7 @@ const updatePreviewUrl = () => {
   // Vue 项目需要添加 /dist 后缀
   const distSuffix = app.value.codeGenType === 'vue_project' ? '/dist' : ''
   // 所有项目类型：从 static 目录读取源代码预览
-  previewUrl.value = `/api/static/${app.value.codeGenType}_${appId.value}${distSuffix}/`
+  previewUrl.value = `${APP_PREVIEW_BASE_URL}/static/${app.value.codeGenType}_${appId.value}${distSuffix}/`
 }
 
 const refreshPreviewByMessageCount = (messageCount: number) => {
