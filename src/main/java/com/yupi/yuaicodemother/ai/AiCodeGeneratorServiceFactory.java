@@ -3,6 +3,7 @@ package com.yupi.yuaicodemother.ai;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.yupi.yuaicodemother.ai.tools.FileWriteTool;
+import com.yupi.yuaicodemother.ai.tools.ToolManager;
 import com.yupi.yuaicodemother.exception.BusinessException;
 import com.yupi.yuaicodemother.exception.ErrorCode;
 import com.yupi.yuaicodemother.model.entity.ChatHistory;
@@ -50,6 +51,9 @@ public class AiCodeGeneratorServiceFactory {
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ToolManager toolManager;
 
     /**
      * AI 服务实例缓存
@@ -104,13 +108,17 @@ public class AiCodeGeneratorServiceFactory {
         initializeChatMemory(appId, chatMemory);
         // 根据代码生成类型选择不同的模型配置
         return switch (codeGenType) {
-            // Vue 项目生成使用推理模型
+            /// Vue 项目生成，使用工具调用和推理模型
             case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
+                    .chatModel(chatModel)
                     .streamingChatModel(reasoningStreamingChatModel)
                     .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
-                    .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
-                            toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()))
+                    .tools(toolManager.getAllTools())
+                    // 处理工具调用幻觉问题
+                    .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                            ToolExecutionResultMessage.from(toolExecutionRequest,
+                                    "Error: there is no tool called " + toolExecutionRequest.name())
+                    )
                     .build();
             // HTML 和多文件生成使用默认模型
             case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
