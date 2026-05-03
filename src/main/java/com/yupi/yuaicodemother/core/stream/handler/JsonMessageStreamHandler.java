@@ -7,6 +7,8 @@ import com.yupi.yuaicodemother.ai.model.message.StreamMessage;
 import com.yupi.yuaicodemother.ai.model.message.StreamMessageTypeEnum;
 import com.yupi.yuaicodemother.ai.model.message.ToolExecutedMessage;
 import com.yupi.yuaicodemother.ai.model.message.ToolRequestMessage;
+import com.yupi.yuaicodemother.ai.tools.BaseTool;
+import com.yupi.yuaicodemother.ai.tools.ToolManager;
 import com.yupi.yuaicodemother.core.builder.VueProjectBuilder;
 import com.yupi.yuaicodemother.core.stream.model.StreamProcessChunk;
 import jakarta.annotation.Resource;
@@ -33,6 +35,12 @@ public class JsonMessageStreamHandler implements StreamHandler {
      */
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    /**
+     * 工具管理器，用于根据工具名称获取工具实例并生成执行结果
+     */
+    @Resource
+    private ToolManager toolManager;
 
     /**
      * 处理 JSON 消息流（无 appId）
@@ -121,14 +129,24 @@ public class JsonMessageStreamHandler implements StreamHandler {
                 yield new StreamProcessChunk(toolMessage, toolMessage);
             }
             case TOOL_EXECUTED -> {
-                // 工具执行结果消息，提取工具名称、调用参数和执行结果返回给前端
+                // 工具执行结果消息，通过 ToolManager 获取工具实例并生成结果
                 ToolExecutedMessage toolExecutedMessage = JSONUtil.toBean(rawMessage, ToolExecutedMessage.class);
                 String toolName = toolExecutedMessage.getName();
                 String arguments = toolExecutedMessage.getArguments();
-                String result = toolExecutedMessage.getResult();
-                // 构建格式：[工具调用] 工具名 参数\n结果
-                String toolMessage = "[工具调用] " + toolName + " " + arguments + "\n" + result;
-                yield new StreamProcessChunk(toolMessage, toolMessage);
+
+                // 通过工具名称获取工具实例并生成结果格式
+                BaseTool tool = toolManager.getTool(toolName);
+                String result;
+                if (tool != null) {
+                    cn.hutool.json.JSONObject jsonArguments = cn.hutool.json.JSONUtil.parseObj(arguments);
+                    result = tool.generateToolExecutedResult(jsonArguments);
+                } else {
+                    // 如果工具不存在，使用原始结果
+                    result = toolExecutedMessage.getResult();
+                    log.warn("未找到工具: {}", toolName);
+                }
+
+                yield new StreamProcessChunk(result, result);
             }
         };
     }
