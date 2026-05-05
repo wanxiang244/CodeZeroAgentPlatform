@@ -3,6 +3,7 @@ package com.yupi.yuaicodemother.controller;
 import cn.hutool.core.util.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.yupi.yuaicodemother.ai.AiCodeGenTypeRoutingService;
+import com.yupi.yuaicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.yupi.yuaicodemother.annotation.AuthCheck;
 import com.yupi.yuaicodemother.common.BaseResponse;
 import com.yupi.yuaicodemother.common.ResultUtils;
@@ -59,7 +60,7 @@ public class AppController {
     private ProjectDownloadService projectDownloadService;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
     // ==================== 用户端接口 ====================
 
     /**
@@ -89,7 +90,7 @@ public class AppController {
         app.setAppName(appName);
         app.setInitPrompt(initPrompt);
         // 代码生成类型：根据提示词路由
-        app.setCodeGenType(aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt).getValue());
+        app.setCodeGenType(aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService().routeCodeGenType(initPrompt).getValue());
         app.setUserId(loginUser.getId());
         // 保存应用
         boolean result = appService.save(app);
