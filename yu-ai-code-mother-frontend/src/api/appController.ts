@@ -112,21 +112,17 @@ export async function downloadAppCode(
   })
 }
 
-/** 此处后端没有提供注释 GET /app/featured/list/page */
+/** 此处后端没有提供注释 POST /app/featured/list/page */
 export async function listFeaturedAppByPage(
-  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.listFeaturedAppByPageParams,
+  body: API.AppQueryRequest,
   options?: { [key: string]: any }
 ) {
   return request<API.BaseResponsePageAppVO>('/app/featured/list/page', {
-    method: 'GET',
-    params: {
-      // pageNum has a default value: 1
-      pageNum: '1',
-      // pageSize has a default value: 10
-      pageSize: '10',
-      ...params,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
     },
+    data: body,
     ...(options || {}),
   })
 }

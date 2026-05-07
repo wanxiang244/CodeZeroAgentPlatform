@@ -28,6 +28,7 @@ import com.yupi.yuaicodemother.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
@@ -206,16 +207,17 @@ public class AppController {
 
     /**
      * 分页查询精选应用（包括自己的）
-     *
-     * @param pageNum  页码
-     * @param pageSize 每页大小
      * @param request  HTTP 请求
      * @return 精选应用分页列表
      */
-    @GetMapping("/featured/list/page")
+    @PostMapping("/featured/list/page")
+    @Cacheable(
+            value = "good_app_page",
+            key = "T(com.yupi.yuaicodemother.utils.CacheKeyUtils).generateKey(#appQueryRequest)",
+            condition = "#appQueryRequest.pageNum <= 10"
+    )
     public BaseResponse<Page<AppVO>> listFeaturedAppByPage(
-            @RequestParam(defaultValue = "1") long pageNum,
-            @RequestParam(defaultValue = "10") long pageSize,
+            @RequestBody AppQueryRequest appQueryRequest,
             HttpServletRequest request) {
         // 获取当前登录用户（可为空，允许未登录用户查看精选应用）
         User loginUser = null;
@@ -228,7 +230,7 @@ public class AppController {
         Long userId = loginUser != null ? loginUser.getId() : null;
 
         // 分页查询
-        Page<AppVO> resultPage = appService.listFeaturedAppByPage(pageNum, pageSize, userId);
+        Page<AppVO> resultPage = appService.listFeaturedAppByPage(appQueryRequest.getPageNum(), appQueryRequest.getPageSize(), userId);
         return ResultUtils.success(resultPage);
     }
 

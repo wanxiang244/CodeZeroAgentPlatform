@@ -186,11 +186,6 @@ declare namespace API {
     id: number
   }
 
-  type listFeaturedAppByPageParams = {
-    pageNum?: number
-    pageSize?: number
-  }
-
   type listMyAppByPageParams = {
     pageNum?: number
     pageSize?: number
