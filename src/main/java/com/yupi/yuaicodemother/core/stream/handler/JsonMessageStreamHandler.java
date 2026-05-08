@@ -79,7 +79,7 @@ public class JsonMessageStreamHandler implements StreamHandler {
             // 流式输出完成后，执行 Vue 项目构建
             if (appId != null) {
                 log.info("流式输出完成，开始构建 Vue 项目，appId: {}", appId);
-                vueProjectBuilder.buildVueProject(appId);
+                vueProjectBuilder.buildVueProjectSync(appId);
             }
         });
     }
