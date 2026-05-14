@@ -21,6 +21,8 @@ import com.yupi.yuaicodemother.model.enums.MessageTypeEnum;
 import com.yupi.yuaicodemother.model.enums.UserRoleEnum;
 import com.yupi.yuaicodemother.model.vo.AppVO;
 import com.yupi.yuaicodemother.model.vo.UserVO;
+import com.yupi.yuaicodemother.monitor.MonitorContext;
+import com.yupi.yuaicodemother.monitor.MonitorContextHolder;
 import com.yupi.yuaicodemother.service.AppService;
 import com.yupi.yuaicodemother.service.ChatHistoryService;
 import com.yupi.yuaicodemother.service.UserService;
@@ -306,7 +308,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
         // 用于收集持久化内容（完整的 AI 回复）
         StringBuilder aiReplyBuilder = new StringBuilder();
-
+        // 设置监控上下文（用户 ID 和应用 ID）
+        MonitorContextHolder.setContext(
+                MonitorContext.builder()
+                        .userId(userId.toString())
+                        .appId(appId.toString())
+                        .build()
+        );
         // 调用 AI 代码生成门面，流式生成代码
         // 处理流程：
         // 1. doOnNext: 收集 persistenceContent 用于保存完整的 AI 回复
@@ -333,6 +341,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                     // 异常时保存错误消息
                     String errorMessage = buildChatErrorMessage(aiReplyBuilder.toString(), error);
                     chatHistoryService.saveMessage(appId, userId, MessageTypeEnum.ERROR, errorMessage);
+                })
+                .doFinally(signalType -> {
+                    // 流结束时清理（无论成功/失败/取消）
+                    MonitorContextHolder.clearContext();
                 });
     }
 
