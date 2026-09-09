@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.yupi</groupId>
-    <artifactId>yu-ai-code-mother-myself</artifactId>
+    <artifactId>CodeZero-Agent-Platform</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>yu-ai-code-mother</name>
     <description>yu-ai-code-mother</description>
@@ -176,7 +176,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.yupi.yuaicodemother.YuAiCodeMotherApplication</mainClass>
+                    <mainClass>com.ljj.CodeZeroAgentPlatform.YuAiCodeMotherApplication</mainClass>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
